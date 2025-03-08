@@ -4,6 +4,8 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Text;
 using UnityEngine.Networking;
+using UnityEngine.SceneManagement;
+
 
 public class LoginScript : MonoBehaviour
 {
@@ -47,14 +49,15 @@ public class LoginScript : MonoBehaviour
             {
                 errorMessage.text = "Login succesvol!";
                 string token = request.downloadHandler.text;
-                PlayerPrefs.SetString("token", token);
+                PlayerPrefs.SetString("access_token", token);
                 PlayerPrefs.Save();
-                Debug.Log("Token opgeslagen: " + token);
+                // Debug.Log("Token opgeslagen: " + token);
+                UnityEngine.SceneManagement.SceneManager.LoadScene("WorldSelector");
             }
             else
             {
                 errorMessage.text = "Login mislukt: " + request.error;
-                Debug.LogError("Login mislukt: " + request.error);
+               // Debug.LogError("Login mislukt: " + request.error);
             }
         }
         
@@ -89,7 +92,7 @@ public class LoginScript : MonoBehaviour
             else
             {
                 errorMessage.text = "Registratie mislukt: " + request.error;
-                Debug.LogError("Registratie mislukt: " + request.error);
+               // Debug.LogError("Registratie mislukt: " + request.error);
             }
         }
     }
