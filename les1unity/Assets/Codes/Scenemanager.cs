@@ -6,6 +6,7 @@ using TMPro;
 public class SceneManager : MonoBehaviour
 {
    public GameObject popupPanel; // Panel voor nieuwe wereld aanmaken
+   public GameObject JouwWereldenPanel;
     public TMP_InputField worldNameInput, maxXInput, maxYInput;
     public Button createWorldButton, cancelButton, openCreateWorldPopupButton;
 
@@ -32,31 +33,34 @@ public class SceneManager : MonoBehaviour
     public void ShowPopup()
     {
         popupPanel.SetActive(true);
+        JouwWereldenPanel.SetActive(false);
     }
 
     public void HidePopup()
     {
         popupPanel.SetActive(false);
+        JouwWereldenPanel.SetActive(true);
     }
 
     IEnumerator CreateWorld()
     {
+        string token = PlayerPrefs.GetString("access_token", "");
         string worldName = worldNameInput.text;
         if (string.IsNullOrEmpty(worldName))
         {
-            Debug.LogError("Wereldnaam mag niet leeg zijn!");
+           // Debug.LogError("Wereldnaam mag niet leeg zijn!");
             yield break;
         }
 
         if (!int.TryParse(maxXInput.text, out int maxX) || maxX < 20 || maxX > 200)
         {
-            Debug.LogError("Max X moet tussen 20 en 200 zijn!");
+           // Debug.LogError("Max X moet tussen 20 en 200 zijn!");
             yield break;
         }
 
         if (!int.TryParse(maxYInput.text, out int maxY) || maxY < 10 || maxY > 100)
         {
-            Debug.LogError("Max Y moet tussen 10 en 100 zijn!");
+          //  Debug.LogError("Max Y moet tussen 10 en 100 zijn!");
             yield break;
         }
 

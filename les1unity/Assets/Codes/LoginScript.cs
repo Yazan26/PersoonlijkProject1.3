@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -14,86 +15,92 @@ public class LoginScript : MonoBehaviour
     public TMP_Text errorMessage;
     public Button loginButton;
     public Button registerButton;
+    public UserApiClient userApiClient;
 
-    private string apiBaseUrl = "https://avansict2233343.azurewebsites.net/account/AccountManagement";
+
+    private void Awake()
+    {
+        userApiClient = FindObjectOfType<UserApiClient>();
+    }
 
     void Start()
     {
-        loginButton.onClick.AddListener(() => StartCoroutine(Login()));
-        registerButton.onClick.AddListener(() => StartCoroutine(Register()));
+        loginButton.onClick.AddListener(Login);
+        registerButton.onClick.AddListener(Register);
     }
 
-    IEnumerator Login()
+    private async void Login()
     {
-        string email = emailInput.text;
-        string password = passwordInput.text;
+        string Email = emailInput.text;
+        string Password = passwordInput.text;
 
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
         {
             errorMessage.text = "Vul alle velden in!";
-            yield break;
+            return;
         }
 
-        string jsonBody = "{\"email\":\"" + email + "\", \"password\":\"" + password + "\"}";
-
-        using (UnityWebRequest request = new UnityWebRequest(apiBaseUrl + "/Login", "POST"))
+        // ✅ Create a User object and pass it to Login()
+        User user = new User
         {
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
+            email = Email,
+            password = Password
+        };
+        // if (userApiClient == null)
+        // {
+        //     Debug.LogError("❌ userApiClient is NULL! Make sure it's assigned in the Inspector.");
+        //     return;
+        // }
+        var response = await userApiClient.Login(user);
 
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
+        if (response is WebRequestData<string> successRespone)
+        {
+            string token = successRespone.Data;
+            PlayerPrefs.SetString("access_token", token);
+            errorMessage.text = "Login succesvol!";
+            WebClient webClient = FindObjectOfType<WebClient>();
+            if (webClient != null)
             {
-                errorMessage.text = "Login succesvol!";
-                string token = request.downloadHandler.text;
-                PlayerPrefs.SetString("access_token", token);
-                PlayerPrefs.Save();
-                // Debug.Log("Token opgeslagen: " + token);
-                UnityEngine.SceneManagement.SceneManager.LoadScene("WorldSelector");
+                webClient.SetToken(token);
             }
             else
             {
-                errorMessage.text = "Login mislukt: " + request.error;
-               // Debug.LogError("Login mislukt: " + request.error);
+                Debug.LogError("❌ WebClient not found in the scene!");
             }
+            UnityEngine.SceneManagement.SceneManager.LoadScene("WorldSelector"); // Switch to the next scene
+        }
+        else if (response is WebRequestError errorResponse)
+        {
+            errorMessage.text = "Login mislukt: " + errorResponse.ErrorMessage;
+        }
+    }
+
+    private async void Register()
+    {
+        string Email = emailInput.text;
+        string Password = passwordInput.text;
+
+        if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
+        {
+            errorMessage.text = "Vul alle velden in!";
+            return;
         }
         
-    }
-
-    IEnumerator Register()
-    {
-        string email = emailInput.text;
-        string password = passwordInput.text;
-
-        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
+        User user = new User
         {
-            errorMessage.text = "Vul alle velden in!";
-            yield break;
+            email = Email,
+            password = Password
+        };
+
+        var response = await userApiClient.Register(user);
+
+        if (response is WebRequestData<string>)
+        {
+            errorMessage.text = "Registratie succesvol! Je kunt nu inloggen.";
         }
-
-        string jsonBody = "{\"email\":\"" + email + "\", \"password\":\"" + password + "\"}";
-
-        using (UnityWebRequest request = new UnityWebRequest(apiBaseUrl + "/Register", "POST"))
+        else if (response is WebRequestError errorResponse)
         {
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            yield return request.SendWebRequest();
-
-            if (request.result == UnityWebRequest.Result.Success)
-            {
-                errorMessage.text = "Registratie succesvol! Je kunt nu inloggen.";
-            }
-            else
-            {
-                errorMessage.text = "Registratie mislukt: " + request.error;
-               // Debug.LogError("Registratie mislukt: " + request.error);
-            }
+            errorMessage.text = "Registratie mislukt: " + errorResponse.ErrorMessage;
         }
     }
 }

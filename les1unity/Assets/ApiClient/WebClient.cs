@@ -9,9 +9,28 @@ public class WebClient : MonoBehaviour
     public string baseUrl;
     private string token;
 
+
+    private void Awake()
+    {
+        string savedToken = PlayerPrefs.GetString("access_token", "");
+
+        if (!string.IsNullOrEmpty(savedToken))
+        {
+            token = savedToken;
+            Debug.Log("✅ Loaded token from PlayerPrefs.");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ No token found in PlayerPrefs.");
+        }
+    }
+
     public void SetToken(string token)
     {
         this.token = token;
+        PlayerPrefs.SetString("access_token", token);
+        PlayerPrefs.Save();
+        
     }
 
     public async Awaitable<IWebRequestReponse> SendGetRequest(string route)
