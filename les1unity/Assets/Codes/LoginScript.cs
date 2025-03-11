@@ -1,12 +1,9 @@
 using System;
+using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using TMPro;
 using UnityEngine.UI;
-using System.Collections;
-using System.Text;
-using UnityEngine.Networking;
-using UnityEngine.SceneManagement;
-
 
 public class LoginScript : MonoBehaviour
 {
@@ -17,7 +14,6 @@ public class LoginScript : MonoBehaviour
     public Button registerButton;
     public UserApiClient userApiClient;
 
-
     private void Awake()
     {
         userApiClient = FindObjectOfType<UserApiClient>();
@@ -25,55 +21,75 @@ public class LoginScript : MonoBehaviour
 
     void Start()
     {
-        loginButton.onClick.AddListener(Login);
+        loginButton.onClick.AddListener(PerformLogin);
         registerButton.onClick.AddListener(Register);
     }
 
-    private async void Login()
+   public async void PerformLogin()
+{
+    string Email = emailInput.text;
+    string Password = passwordInput.text;
+
+    if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
     {
-        string Email = emailInput.text;
-        string Password = passwordInput.text;
+        errorMessage.text = "Vul alle velden in!";
+        return;
+    }
 
-        if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
-        {
-            errorMessage.text = "Vul alle velden in!";
-            return;
-        }
+    User user = new User
+    {
+        email = Email,
+        password = Password
+    };
 
-        // ✅ Create a User object and pass it to Login()
-        User user = new User
-        {
-            email = Email,
-            password = Password
-        };
-        // if (userApiClient == null)
-        // {
-        //     Debug.LogError("❌ userApiClient is NULL! Make sure it's assigned in the Inspector.");
-        //     return;
-        // }
-        var response = await userApiClient.Login(user);
+    IWebRequestReponse webRequestResponse = await userApiClient.Login(user);
 
-        if (response is WebRequestData<string> successRespone)
-        {
-            string token = successRespone.Data;
-            PlayerPrefs.SetString("access_token", token);
-            errorMessage.text = "Login succesvol!";
+    switch (webRequestResponse)
+    {
+        case WebRequestData<string> dataResponse:
+            Debug.Log("✅ Login successful! Token received: " + dataResponse.Data);
+            PlayerPrefs.SetString("access_token", dataResponse.Data);
+            PlayerPrefs.Save();
+
             WebClient webClient = FindObjectOfType<WebClient>();
             if (webClient != null)
             {
-                webClient.SetToken(token);
+                webClient.SetToken(dataResponse.Data);
             }
             else
             {
                 Debug.LogError("❌ WebClient not found in the scene!");
             }
-            UnityEngine.SceneManagement.SceneManager.LoadScene("WorldSelector"); // Switch to the next scene
-        }
-        else if (response is WebRequestError errorResponse)
-        {
-            errorMessage.text = "Login mislukt: " + errorResponse.ErrorMessage;
-        }
+
+            // ✅ **Haalt de juiste `userId` op via /me en slaat deze op**
+            IWebRequestReponse userResponse = await userApiClient.GetCurrentUser();
+            if (userResponse is WebRequestData<string> userIdData)
+            {
+                PlayerPrefs.SetString("UserId", userIdData.Data);
+                PlayerPrefs.Save();
+                Debug.Log("✅ User ID opgeslagen: " + userIdData.Data);
+            }
+            else
+            {
+                Debug.LogError("❌ Kan User ID niet ophalen!");
+                errorMessage.text = "Fout bij ophalen van gebruikersgegevens.";
+                return;
+            }
+
+            await SceneManager.LoadSceneAsync("WorldSelector");
+            await Task.Yield();
+            break;
+
+        case WebRequestError errorResponse:
+            errorMessage.text = "Geen account gevonden met deze gegevens!";
+            Debug.LogError("❌ Login failed: " + errorResponse.ErrorMessage);
+            break;
+
+        default:
+            throw new NotImplementedException("Unhandled response type: " + webRequestResponse.GetType());
     }
+}
+
 
     private async void Register()
     {
@@ -85,14 +101,14 @@ public class LoginScript : MonoBehaviour
             errorMessage.text = "Vul alle velden in!";
             return;
         }
-        
+
         User user = new User
         {
             email = Email,
             password = Password
         };
 
-        var response = await userApiClient.Register(user);
+        IWebRequestReponse response = await userApiClient.Register(user);
 
         if (response is WebRequestData<string>)
         {

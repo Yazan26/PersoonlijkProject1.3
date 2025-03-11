@@ -7,18 +7,23 @@ public class Environment2DApiClient : MonoBehaviour
 {
     public WebClient webClient;
 
-    public async Awaitable<IWebRequestReponse> ReadEnvironment2Ds() 
+    public async Awaitable<IWebRequestReponse> ReadEnvironment2Ds(string userId) 
     {
-        string route = "/Enviroment2D";
+        string route = $"/Environment2D?{userId}";
 
         IWebRequestReponse webRequestResponse = await webClient.SendGetRequest(route);
         return ParseEnvironment2DListResponse(webRequestResponse);
+        
+        // new (might want to remove this)
+        
     }
 
     public async Awaitable<IWebRequestReponse> CreateEnvironment(Environment2D environment)
     {
-        string route = "/Enviroment2D";
+        string route = "/Environment2D";
         string data = JsonUtility.ToJson(environment);
+        Debug.Log("📡 Verzonden JSON: " + data); // ✅ Log om te checken TBREMOVED
+
 
         IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, data);
         return ParseEnvironment2DResponse(webRequestResponse);
@@ -26,7 +31,7 @@ public class Environment2DApiClient : MonoBehaviour
 
     public async Awaitable<IWebRequestReponse> DeleteEnvironment(string environmentId)
     {
-        string route = "/Enviroment2D/" + environmentId;
+        string route = "/Environment2D/" + environmentId;
         return await webClient.SendDeleteRequest(route);
     }
 
