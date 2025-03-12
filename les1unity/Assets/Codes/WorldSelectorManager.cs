@@ -43,7 +43,7 @@ public class WorldSelectorManager : MonoBehaviour
     //---------------------------------------------------------------
     public async void LoadWorldSlots()
     {
-        string userId = PlayerPrefs.GetString("UserId", "");
+        string userId = PlayerPrefs.GetString("UserId", ""); // ✅ Get current user's ID
 
         if (string.IsNullOrEmpty(userId))
         {
@@ -55,7 +55,7 @@ public class WorldSelectorManager : MonoBehaviour
 
         if (response is WebRequestError error)
         {
-            feedbackText.text = "❌ Fout bij ophalen environments: " + error.ErrorMessage;
+            feedbackText.text = "❌ Fout bij ophalen werelden: " + error.ErrorMessage;
             return;
         }
 
@@ -86,6 +86,7 @@ public class WorldSelectorManager : MonoBehaviour
             }
         }
     }
+
 
     //---------------------------------------------------------------
     // ✅ Select a world, but don't load or delete yet

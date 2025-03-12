@@ -21,6 +21,8 @@ public class LoginScript : MonoBehaviour
 
     void Start()
     {
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save(); // deletes previous login data
         loginButton.onClick.AddListener(PerformLogin);
         registerButton.onClick.AddListener(Register);
     }

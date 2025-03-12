@@ -7,16 +7,14 @@ public class Environment2DApiClient : MonoBehaviour
 {
     public WebClient webClient;
 
-    public async Awaitable<IWebRequestReponse> ReadEnvironment2Ds(string userId) 
+    public async Awaitable<IWebRequestReponse> ReadEnvironment2Ds(string userId)
     {
-        string route = $"/Environment2D?{userId}";
+        string route = $"/Environment2D/user/{userId}"; // ✅ Fetch only the user's worlds
 
         IWebRequestReponse webRequestResponse = await webClient.SendGetRequest(route);
         return ParseEnvironment2DListResponse(webRequestResponse);
-        
-        // new (might want to remove this)
-        
     }
+
     
     public async Awaitable<IWebRequestReponse> ReadSingleEnvironment(string environmentId)
     {
