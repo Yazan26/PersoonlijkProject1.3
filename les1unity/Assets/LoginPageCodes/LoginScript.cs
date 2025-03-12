@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -63,7 +64,7 @@ public class LoginScript : MonoBehaviour
                 Debug.LogError("❌ WebClient not found in the scene!");
             }
 
-            // ✅ **Haalt de juiste `userId` op via /me en slaat deze op**
+            // ✅ **Retrieve user ID and store it**
             IWebRequestReponse userResponse = await userApiClient.GetCurrentUser();
             if (userResponse is WebRequestData<string> userIdData)
             {
@@ -83,7 +84,14 @@ public class LoginScript : MonoBehaviour
             break;
 
         case WebRequestError errorResponse:
-            errorMessage.text = "Geen account gevonden met deze gegevens!";
+            if (errorResponse.ErrorMessage.Contains("401"))
+            {
+                errorMessage.text = "❌ Onjuist wachtwoord of gebruikersnaam.";
+            }
+            else
+            {
+                errorMessage.text = "❌ Login mislukt. Probeer opnieuw.";
+            }
             Debug.LogError("❌ Login failed: " + errorResponse.ErrorMessage);
             break;
 
@@ -93,32 +101,57 @@ public class LoginScript : MonoBehaviour
 }
 
 
-    private async void Register()
+private async void Register()
+{
+    string Email = emailInput.text;
+    string Password = passwordInput.text;
+
+    if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
     {
-        string Email = emailInput.text;
-        string Password = passwordInput.text;
-
-        if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
-        {
-            errorMessage.text = "Vul alle velden in!";
-            return;
-        }
-
-        User user = new User
-        {
-            email = Email,
-            password = Password
-        };
-
-        IWebRequestReponse response = await userApiClient.Register(user);
-
-        if (response is WebRequestData<string>)
-        {
-            errorMessage.text = "Registratie succesvol! Je kunt nu inloggen.";
-        }
-        else if (response is WebRequestError errorResponse)
-        {
-            errorMessage.text = "Registratie mislukt: " + errorResponse.ErrorMessage;
-        }
+        errorMessage.text = "❌ Vul alle velden in!";
+        return;
     }
+
+    // ✅ Validate password requirements
+    if (Password.Length < 10 || 
+        !Password.Any(char.IsUpper) || 
+        !Password.Any(char.IsLower) || 
+        !Password.Any(char.IsDigit) || 
+        !Password.Any(ch => !char.IsLetterOrDigit(ch)))
+    {
+        errorMessage.text = "❌ Wachtwoord moet minimaal 10 tekens, een hoofdletter, een kleine letter, een cijfer en een speciaal teken bevatten.";
+        return;
+    }
+
+    User user = new User
+    {
+        email = Email,
+        password = Password
+    };
+
+    IWebRequestReponse response = await userApiClient.Register(user);
+
+    switch (response)
+    {
+        case WebRequestData<string>:
+            Debug.Log("✅ Registratie succesvol!");
+            errorMessage.text = "✅ Registratie succesvol! Je kunt nu inloggen.";
+            break;
+
+        case WebRequestError errorResponse:
+            if (errorResponse.ErrorMessage.Contains("duplicate"))
+            {
+                errorMessage.text = "❌ Deze gebruikersnaam is al in gebruik!";
+            }
+            else
+            {
+                errorMessage.text = "❌ Registratie mislukt: " + errorResponse.ErrorMessage;
+            }
+            Debug.LogError("❌ Registratie mislukt: " + errorResponse.ErrorMessage);
+            break;
+
+        default:
+            throw new NotImplementedException("Unhandled response type: " + response.GetType());
+    }
+}
 }
