@@ -17,6 +17,14 @@ public class Environment2DApiClient : MonoBehaviour
         // new (might want to remove this)
         
     }
+    
+    public async Awaitable<IWebRequestReponse> ReadSingleEnvironment(string environmentId)
+    {
+        string route = $"/Environment2D/world/{environmentId}"; // ✅ Correct API endpoint
+
+        IWebRequestReponse webRequestResponse = await webClient.SendGetRequest(route);
+        return ParseEnvironment2DResponse(webRequestResponse);
+    }
 
     public async Awaitable<IWebRequestReponse> CreateEnvironment(Environment2D environment)
     {
