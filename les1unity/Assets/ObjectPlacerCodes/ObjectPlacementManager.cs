@@ -82,6 +82,13 @@ public class ObjectPlacementManager : MonoBehaviour
     public async void LoadObjects()
     {
         string worldId = PlayerPrefs.GetString("SelectedWorldId", "");
+    
+        if (string.IsNullOrEmpty(worldId))
+        {
+            Debug.LogError("❌ SelectedWorldId is missing! Make sure it is set in PlayerPrefs.");
+            return;
+        }
+
         Debug.Log($"📡 Loading objects for world: {worldId}"); // ✅ Debugging
 
         IWebRequestReponse response = await object2DApiClient.ReadObject2Ds(worldId);
@@ -96,6 +103,7 @@ public class ObjectPlacementManager : MonoBehaviour
             Debug.LogError($"❌ Error loading objects: {errorResponse.ErrorMessage}");
         }
     }
+
 
     void InstantiateObjects(List<Object2D> objects)
     {
