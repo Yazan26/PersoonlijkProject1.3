@@ -10,6 +10,7 @@ using UnityEngine;
 public class Object2D
 {
     public string id;
+    public string userID;
 
     public string environmentId;
 
