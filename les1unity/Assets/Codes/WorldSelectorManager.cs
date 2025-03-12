@@ -43,7 +43,7 @@ public class WorldSelectorManager : MonoBehaviour
     //---------------------------------------------------------------
     public async void LoadWorldSlots()
     {
-        string userId = PlayerPrefs.GetString("UserId", ""); // ✅ Get current user's ID
+        string userId = PlayerPrefs.GetString("UserId", "");
 
         if (string.IsNullOrEmpty(userId))
         {
@@ -65,8 +65,12 @@ public class WorldSelectorManager : MonoBehaviour
 
             for (int i = 0; i < worldButtons.Length; i++)
             {
+                if (worldButtons[i] == null) continue; // ✅ Skip if button is destroyed
+
                 Button button = worldButtons[i];
                 TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
+
+                if (buttonText == null) continue; // ✅ Skip if text component is missing
 
                 buttonText.text = "Empty World Slot";
                 button.onClick.RemoveAllListeners();
@@ -75,9 +79,13 @@ public class WorldSelectorManager : MonoBehaviour
 
             for (int i = 0; i < environments.Count && i < worldButtons.Length; i++)
             {
+                if (worldButtons[i] == null) continue; // ✅ Skip if button is destroyed
+
                 Environment2D world = environments[i];
                 Button button = worldButtons[i];
                 TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
+
+                if (buttonText == null) continue; // ✅ Skip if text component is missing
 
                 buttonText.text = world.name;
                 button.interactable = true;
@@ -86,7 +94,6 @@ public class WorldSelectorManager : MonoBehaviour
             }
         }
     }
-
 
     //---------------------------------------------------------------
     // ✅ Select a world, but don't load or delete yet
