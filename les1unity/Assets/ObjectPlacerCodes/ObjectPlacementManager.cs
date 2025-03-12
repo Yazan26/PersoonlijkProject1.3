@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
@@ -12,11 +13,13 @@ public class ObjectPlacementManager : MonoBehaviour
     private GameObject selectedObjectPrefab;
     private string selectedWorldId;
     private string userId;
+    private string environmentId;
 
     void Start()
     {
         selectedWorldId = PlayerPrefs.GetString("SelectedWorldId", "");
         userId = PlayerPrefs.GetString("UserId", "");
+        environmentId = selectedWorldId; // Gebruik `selectedWorldId` als `environmentId`
 
         if (string.IsNullOrEmpty(selectedWorldId) || string.IsNullOrEmpty(userId))
         {
@@ -46,27 +49,37 @@ public class ObjectPlacementManager : MonoBehaviour
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             mousePosition.z = 0; // Ensure 2D placement
 
-            GameObject newObject = Instantiate(selectedObjectPrefab, mousePosition, Quaternion.identity, worldContainer);
-            SaveObjectToDatabase(newObject);
+            GameObject newObj = Instantiate(selectedObjectPrefab, mousePosition, Quaternion.identity, worldContainer);
+            SaveObjectToDatabase(newObj);
         }
     }
 
     async void SaveObjectToDatabase(GameObject obj)
     {
+        // ✅ Check dat UserID en EnvironmentID correct zijn
+        if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(environmentId))
+        {
+            Debug.LogError("❌ Cannot save object: UserID or EnvironmentID is missing!");
+            return;
+        }
+
         Object2D newObject = new Object2D
         {
-            id = System.Guid.NewGuid().ToString(), // Generate a new GUID
-            prefabId = obj.name,
+            id = Guid.NewGuid().ToString(), // ✅ Converteer naar string
+            userID = userId, // ✅ UserID als string
+            environmentId = environmentId, // ✅ Zorg dat dit de juiste worldId is!
+            prefabId = obj.name, // ✅ Gebruik de naam van de prefab
             positionX = obj.transform.position.x,
             positionY = obj.transform.position.y,
             scaleX = obj.transform.localScale.x,
             scaleY = obj.transform.localScale.y,
             rotationZ = obj.transform.rotation.eulerAngles.z,
-            sortingLayer = 0, // Default sorting layer
-            environmentId =  PlayerPrefs.GetString("SelectedWorldId", "")
+            sortingLayer = 0
         };
 
-        IWebRequestReponse response = await object2DApiClient.CreateObject2D(newObject);
+        Debug.Log($"📡 Sending Object2D to API: {JsonUtility.ToJson(newObject)}");
+
+        IWebRequestReponse response = await object2DApiClient.CreateObject2D(newObject, userId);
 
         if (response is WebRequestData<Object2D>)
         {
@@ -81,21 +94,19 @@ public class ObjectPlacementManager : MonoBehaviour
     // ✅ Load saved objects when the scene starts
     public async void LoadObjects()
     {
-        string worldId = PlayerPrefs.GetString("SelectedWorldId", "");
-    
-        if (string.IsNullOrEmpty(worldId))
+        if (string.IsNullOrEmpty(selectedWorldId))
         {
             Debug.LogError("❌ SelectedWorldId is missing! Make sure it is set in PlayerPrefs.");
             return;
         }
 
-        Debug.Log($"📡 Loading objects for world: {worldId}"); // ✅ Debugging
+        Debug.Log($"📡 Loading objects for world: {selectedWorldId}");
 
-        IWebRequestReponse response = await object2DApiClient.ReadObject2Ds(worldId);
+        IWebRequestReponse response = await object2DApiClient.ReadObject2Ds(selectedWorldId);
 
         if (response is WebRequestData<List<Object2D>> dataResponse)
         {
-            Debug.Log($"✅ Loaded {dataResponse.Data.Count} objects!"); // ✅ Debugging
+            Debug.Log($"✅ Loaded {dataResponse.Data.Count} objects!");
             InstantiateObjects(dataResponse.Data);
         }
         else if (response is WebRequestError errorResponse)
@@ -103,7 +114,6 @@ public class ObjectPlacementManager : MonoBehaviour
             Debug.LogError($"❌ Error loading objects: {errorResponse.ErrorMessage}");
         }
     }
-
 
     void InstantiateObjects(List<Object2D> objects)
     {
@@ -122,5 +132,4 @@ public class ObjectPlacementManager : MonoBehaviour
             }
         }
     }
-    
 }
