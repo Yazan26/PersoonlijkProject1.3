@@ -26,4 +26,5 @@ public class Object2D
     public float rotationZ;
 
     public int sortingLayer;
+    
 }
