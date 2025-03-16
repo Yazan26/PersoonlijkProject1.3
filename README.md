@@ -1,2 +1,2 @@
-# PersoonlijkProject1.3
-persoonlijke opdracht gather clone in Unity periode 1.3
+# Unity object placer
+unity object placer that uses secure aspnet core webAPI's to save Objects, environments and login information in a database
