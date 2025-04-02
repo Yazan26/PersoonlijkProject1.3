@@ -399,7 +399,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4135133476367448920, guid: f0eb12f104f777e4fb0e1fdfd7fd975b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
@@ -413,6 +414,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 897e0cc10f8521f49a93fed71f583bfd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &155198593 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1483920557258638391, guid: f0eb12f104f777e4fb0e1fdfd7fd975b, type: 3}
+  m_PrefabInstance: {fileID: 155198591}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2c86bd7546f1f94e9c106ea19a09157, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &173823362
@@ -3159,24 +3171,26 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   environmentApiClient: {fileID: 155198592}
-  worldNameInput: {fileID: 560357852}
-  maxXInput: {fileID: 1650672370}
-  maxYInput: {fileID: 2046534368}
+  WebClient: {fileID: 155198593}
   feedbackText: {fileID: 319272889}
-  JouwWereldenPanel: {fileID: 703393578}
-  createWorldButton: {fileID: 370857129}
-  cancelButton: {fileID: 1881062170}
-  openCreateWorldPopupButton: {fileID: 1556183648}
-  RefreshButton: {fileID: 394080702}
-  deleteButton: {fileID: 564972085}
-  loadButton: {fileID: 173823366}
-  popupPanel: {fileID: 2088224059}
   worldButtons:
   - {fileID: 1739295206}
   - {fileID: 1687634760}
+  - {fileID: 1383948533}
   - {fileID: 1379043459}
   - {fileID: 526949128}
   - {fileID: 1342886730}
+  refreshButton: {fileID: 394080702}
+  deleteButton: {fileID: 564972085}
+  loadButton: {fileID: 173823366}
+  createButton: {fileID: 370857129}
+  showpanelButton: {fileID: 1556183648}
+  cancelbutton: {fileID: 1881062170}
+  wereldNaamInput: {fileID: 560357852}
+  maxHoogteInput: {fileID: 2046534368}
+  maxBreedteInput: {fileID: 1650672370}
+  worldspanel: {fileID: 703393578}
+  createpanel: {fileID: 2088224059}
 --- !u!1 &1185605033
 GameObject:
   m_ObjectHideFlags: 0

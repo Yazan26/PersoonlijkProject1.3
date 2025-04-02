@@ -1,241 +1,256 @@
 using System;
 using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class WorldSelectorManager : MonoBehaviour
 {
-    public Environment2DApiClient environmentApiClient; 
-    public TMP_InputField worldNameInput, maxXInput, maxYInput;
+    private int geselecteerdeIndex = -1;
+
+    [Header("WebClient Reference")] 
+    public Environment2DApiClient environmentApiClient;
+    public WebClient WebClient;
     public TMP_Text feedbackText;
-    public GameObject JouwWereldenPanel;
-    public Button createWorldButton, cancelButton, openCreateWorldPopupButton, RefreshButton, deleteButton, loadButton;
-    public GameObject popupPanel;
-    
-    public Button[] worldButtons; 
+
+    public Button[] worldButtons;
+    public Button refreshButton, deleteButton, loadButton, createButton, showpanelButton, cancelbutton;
+
+    [Header("Input Fields")] 
+    public TMP_InputField wereldNaamInput;
+    public TMP_InputField maxHoogteInput;
+    public TMP_InputField maxBreedteInput;
+
+    public GameObject worldspanel, createpanel;
+
+    private List<Environment2D> huidigeWorlds = new();
     private string selectedWorldId;
-    private string selectedWorldName;
+    private Environment2D selectedWorld;
 
-    //---------------------------------------------------------------
-    void Start()
+    private void Start()
     {
-        openCreateWorldPopupButton.onClick.AddListener(ShowPopup);
-        createWorldButton.onClick.AddListener(CreateWorld);
-        cancelButton.onClick.AddListener(HidePopup);
-        RefreshButton.onClick.AddListener(LoadWorldSlots);
+        Debug.Log("🔄 Initialiseren WorldSelectorManager...");
+
+        refreshButton.onClick.AddListener(LoadWorldSlots);
         deleteButton.onClick.AddListener(DeleteSelectedWorld);
-        loadButton.onClick.AddListener(LoadSelectedWorld); // ✅ New Load Button
+        loadButton.onClick.AddListener(LoadSelectedWorld);
+        createButton.onClick.AddListener(CreateNewWorld);
+        showpanelButton.onClick.AddListener(ShowPanel);
+        cancelbutton.onClick.AddListener(CancelWorld);
 
-        string token = PlayerPrefs.GetString("access_token", "");
-        popupPanel.SetActive(false);
-
-        if (string.IsNullOrEmpty(token))
-        {
-            Debug.LogError("❌ No JWT token found! Redirecting to login.");
-            UnityEngine.SceneManagement.SceneManager.LoadScene("LoginScene");
-            return;
-        }
-
-        LoadWorldSlots(); // ✅ Populate world slots on start
+        LoadWorldSlots();
     }
 
-    //---------------------------------------------------------------
+    void ShowPanel()
+    {
+        Debug.Log("📂 Create Panel tonen...");
+        worldspanel.SetActive(false);
+        createpanel.SetActive(true);
+    }
+
+    void CancelWorld()
+    {
+        Debug.Log("❌ Create Panel annuleren...");
+        worldspanel.SetActive(true);
+        createpanel.SetActive(false);
+    }
+
     public async void LoadWorldSlots()
     {
-        string userId = PlayerPrefs.GetString("UserId", "");
+        Debug.Log("🌍 Werelden worden geladen...");
+        selectedWorld = null;
+        feedbackText.text = "Werelden laden...";
 
-        if (string.IsNullOrEmpty(userId))
+        var response = await WebClient.SendGetRequest("/environment2D");
+
+        if (response is WebRequestData<string> data)
         {
-            feedbackText.text = "❌ Je moet ingelogd zijn om werelden te zien!";
-            return;
-        }
+            Debug.Log("📥 Ontvangen JSON:\n" + data.Data);
+            huidigeWorlds = JsonHelper.ParseJsonArray<Environment2D>(data.Data);
 
-        IWebRequestReponse response = await environmentApiClient.ReadEnvironment2Ds(userId);
-
-        if (response is WebRequestError error)
-        {
-            feedbackText.text = "❌ Fout bij ophalen werelden: " + error.ErrorMessage;
-            return;
-        }
-
-        if (response is WebRequestData<List<Environment2D>> dataResponse)
-        {
-            List<Environment2D> environments = dataResponse.Data;
-
-            for (int i = 0; i < worldButtons.Length; i++)
+            for (int i = 0; i < huidigeWorlds.Count; i++)
             {
-                if (worldButtons[i] == null) continue; // ✅ Skip if button is destroyed
-
-                Button button = worldButtons[i];
-                TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
-
-                if (buttonText == null) continue; // ✅ Skip if text component is missing
-
-                buttonText.text = "Empty World Slot";
-                button.onClick.RemoveAllListeners();
-                button.interactable = false; // Disable empty slots
+                Environment2D a = huidigeWorlds[i];
+                Debug.Log($"🧾 [{i}] Naam: {a.Name} | MaxWidth: {a.MaxWidth} | MaxHeight: {a.MaxHeight} | Id: {a.Id} | userId: {a.OwnerUserID}");
             }
 
-            for (int i = 0; i < environments.Count && i < worldButtons.Length; i++)
-            {
-                if (worldButtons[i] == null) continue; // ✅ Skip if button is destroyed
-
-                Environment2D world = environments[i];
-                Button button = worldButtons[i];
-                TMP_Text buttonText = button.GetComponentInChildren<TMP_Text>();
-
-                if (buttonText == null) continue; // ✅ Skip if text component is missing
-
-                buttonText.text = world.name;
-                button.interactable = true;
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => SelectWorld(world.id, world.name)); // ✅ Corrected selection
-            }
-        }
-    }
-
-    //---------------------------------------------------------------
-    // ✅ Select a world, but don't load or delete yet
-    public void SelectWorld(string worldId, string worldName)
-    {
-        selectedWorldId = worldId;
-        selectedWorldName = worldName;
-        PlayerPrefs.SetString("SelectedWorldId", worldId);
-        PlayerPrefs.Save();
-        Debug.Log($"🌍 Wereld geselecteerd: {worldName} (ID: {worldId})");
-        feedbackText.text = $"✅ Geselecteerde wereld: {worldName}";
-    }
-
-    //---------------------------------------------------------------
-    // ✅ Load the selected world
-    public void LoadSelectedWorld()
-    {
-        if (string.IsNullOrEmpty(selectedWorldId))
-        {
-            feedbackText.text = "❌ Geen wereld geselecteerd om te laden!";
-            return;
-        }
-
-        Debug.Log($"🌍 Laden van wereld: {selectedWorldName} (ID: {selectedWorldId})");
-        UnityEngine.SceneManagement.SceneManager.LoadScene("SeeEnvironmentScene");
-    }
-
-    //---------------------------------------------------------------
-    // ✅ Delete the selected world
-    public async void DeleteSelectedWorld()
-    {
-        if (string.IsNullOrEmpty(selectedWorldId))
-        {
-            feedbackText.text = "❌ Geen wereld geselecteerd om te verwijderen!";
-            return;
-        }
-
-        bool confirm = ConfirmDelete(); // ✅ Ask for confirmation
-        if (!confirm) return;
-
-        IWebRequestReponse response = await environmentApiClient.DeleteEnvironment(selectedWorldId);
-
-        if (response is WebRequestError errorResponse)
-        {
-            feedbackText.text = "❌ Kon wereld niet verwijderen!";
+            feedbackText.text = "✅ Werelden geladen!";
+            ShowWorldSlots();
         }
         else
         {
-            Debug.Log($"✅ Wereld {selectedWorldName} verwijderd!");
-            PlayerPrefs.DeleteKey("SelectedWorldId");
-            selectedWorldId = null;
-            selectedWorldName = null;
-            feedbackText.text = "✅ Wereld verwijderd!";
-            LoadWorldSlots(); // ✅ Refresh list after deletion
+            Debug.LogError("❌ Fout bij ophalen van werelden.");
+            feedbackText.text = "❌ Fout bij laden van werelden!";
         }
     }
 
-    //---------------------------------------------------------------
-    // ✅ Confirmation before deleting
-    private bool ConfirmDelete()
+    private void ShowWorldSlots()
     {
-        return UnityEngine.SceneManagement.SceneManager.GetActiveScene().name != "SeeEnvironmentScene";
-    }
+        Debug.Log("📣 ShowWorldSlots() aangeroepen met " + huidigeWorlds.Count + " werelden.");
 
-    //---------------------------------------------------------------
-    public void ShowPopup()
-    {
-        popupPanel.SetActive(true);
-        JouwWereldenPanel.SetActive(false);
-    }
-
-    //---------------------------------------------------------------
-    public void HidePopup()
-    {
-        popupPanel.SetActive(false);
-        JouwWereldenPanel.SetActive(true);
-    }
-
-    //---------------------------------------------------------------
-    public async void CreateWorld()
-    {
-        feedbackText.text = "";
-
-        if (environmentApiClient == null)
+        for (int i = 0; i < worldButtons.Length; i++)
         {
-            feedbackText.text = "Serverfout: API niet geladen!";
-            return;
-        }
+            Button button = worldButtons[i];
+            button.onClick.RemoveAllListeners();
 
-        string token = PlayerPrefs.GetString("access_token", "");
-        if (string.IsNullOrEmpty(token))
-        {
-            UnityEngine.SceneManagement.SceneManager.LoadScene("LoginScene");
-            return;
-        }
-
-        string ownerUserId = PlayerPrefs.GetString("UserId", "");
-        if (string.IsNullOrEmpty(ownerUserId))
-        {
-            feedbackText.text = "❌ Je moet ingelogd zijn om een wereld te maken!";
-            return;
-        }
-
-        IWebRequestReponse response = await environmentApiClient.ReadEnvironment2Ds(ownerUserId);
-
-        if (response is WebRequestData<List<Environment2D>> existingWorldsResponse)
-        {
-            if (existingWorldsResponse.Data.Count >= 6)
+            if (i < huidigeWorlds.Count)
             {
-                feedbackText.text = "❌ Je kunt maximaal 6 werelden hebben!";
-                return;
+                Environment2D environment2d = huidigeWorlds[i];
+                string id = environment2d.Id;
+
+                TextMeshProUGUI buttonText = button.GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                    buttonText.text = environment2d.Name;
+
+                button.interactable = true;
+                button.name = id;
+
+                button.onClick.AddListener(() => SelectWorldById(id));
+                Debug.Log($"📌 Knop {i} toegewezen aan wereld: {environment2d.Name} (id: {id})");
+            }
+            else
+            {
+                TextMeshProUGUI buttonText = worldButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+                if (buttonText != null)
+                    buttonText.text = "leeg Wereld slot";
+
+                button.interactable = false;
+                button.name = "leeg";
             }
         }
+    }
 
-        if (!int.TryParse(maxXInput.text, out int maxX) || !int.TryParse(maxYInput.text, out int maxY))
+    private void SelectWorldById(string id)
+    {
+        Debug.Log($"🔍 SelectWorldById aangeroepen voor id: {id}");
+
+        selectedWorld = huidigeWorlds.Find(a => a.Id == id);
+        if (selectedWorld != null)
         {
-            feedbackText.text = "❌ Lengte en hoogte moeten cijfers zijn!";
+            selectedWorldId = selectedWorld.Id;
+            wereldNaamInput.text = selectedWorld.Name;
+            maxHoogteInput.text = selectedWorld.MaxHeight.ToString();
+            maxBreedteInput.text = selectedWorld.MaxWidth.ToString();
+
+            Debug.Log($"✅ Wereld geselecteerd: {selectedWorld.Name} (id: {selectedWorld.Id})");
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Wereld niet gevonden!");
+            feedbackText.text = "❌ Wereld niet gevonden!";
+        }
+    }
+
+    private void SelectWorld(int index)
+    {
+        if (index < 0 || index >= huidigeWorlds.Count)
+        {
+            feedbackText.text = "❌ Ongeldige index!";
+            Debug.LogWarning("⚠️ Ongeldige index bij SelectWorld.");
             return;
         }
 
-        string worldName = worldNameInput.text.Trim();
-        if (worldName.Length < 1 || worldName.Length > 25)
+        geselecteerdeIndex = index;
+        Environment2D environment2D = huidigeWorlds[index];
+
+        wereldNaamInput.text = environment2D.Name;
+        maxHoogteInput.text = environment2D.MaxHeight.ToString();
+        maxBreedteInput.text = environment2D.MaxWidth.ToString();
+
+        Debug.Log($"✅ Geselecteerde wereld via index: {environment2D.Name} (id: {environment2D.Id})");
+    }
+
+    public void LoadSelectedWorld()
+    {
+        Debug.Log("▶️ LoadSelectedWorld aangeroepen");
+
+        if (string.IsNullOrEmpty(selectedWorldId))
         {
-            feedbackText.text = "❌ Naam moet tussen 1-25 tekens zijn!";
+            feedbackText.text = "❌ Geen wereld geselecteerd!";
+            Debug.LogWarning("⚠️ Geen wereld geselecteerd!");
             return;
         }
 
-        Environment2D newWorld = new Environment2D
+        PlayerPrefs.SetString("SelectedWorldId", selectedWorldId);
+        PlayerPrefs.Save();
+
+        feedbackText.text = $"🌍 Laden van wereld: {selectedWorld.Name}";
+        Debug.Log($"🚀 Laden van wereldscene voor wereld: {selectedWorld.Name} (id: {selectedWorld.Id})");
+
+        SceneManager.LoadScene("SeeEnvironmentScene");
+    }
+
+    public async void CreateNewWorld()
+    {
+        Debug.Log("🛠️ CreateNewWorld aangeroepen");
+
+        if (string.IsNullOrWhiteSpace(wereldNaamInput.text) ||
+            !int.TryParse(maxBreedteInput.text, out int maxWidth) ||
+            !int.TryParse(maxHoogteInput.text, out int maxHeight))
         {
-            id = Guid.NewGuid().ToString(),
-            name = worldName,
-            maxWidth = maxX,
-            maxHeight = maxY,
-            ownerUserId = ownerUserId
+            feedbackText.text = "❌ Vul alle velden correct in!";
+            Debug.LogWarning("⚠️ Ongeldige invoer bij wereld aanmaken!");
+            return;
+        }
+
+        Environment2D nieuweEnvironment2D = new Environment2D
+        {
+            Name = wereldNaamInput.text,
+            MaxWidth = maxWidth,
+            MaxHeight = maxHeight
         };
 
-        IWebRequestReponse createResponse = await environmentApiClient.CreateEnvironment(newWorld);
-        if (createResponse is WebRequestData<Environment2D> createdWorldResponse)
+        string json = JsonUtility.ToJson(nieuweEnvironment2D);
+        json = RemoveidFieldFromJson(json);
+
+        Debug.Log("📤 JSON verstuurd:\n" + json);
+        var response = await WebClient.SendPostRequest("/environment2D/createworld", json);
+
+        if (response is WebRequestData<string>)
         {
-            feedbackText.text = "✅ Wereld succesvol aangemaakt!";
-            HidePopup();
+            Debug.Log("✅ Wereld succesvol aangemaakt!");
             LoadWorldSlots();
+            CancelWorld(); // automatisch terug naar lijst
+        }
+        else
+        {
+            Debug.LogError("❌ Fout bij aanmaken van wereld! " + response);
+            feedbackText.text = "❌ Fout bij aanmaken van wereld!";
+        }
+    }
+
+    private string RemoveidFieldFromJson(string json)
+    {
+        json = json.Replace("\"Id\":\"\",", "");
+        json = json.Replace(",\"Id\":\"\"", "");
+        json = json.Replace("\"OwnerUserID\":\"\",", "");
+        json = json.Replace(",\"OwnerUserID\":\"\"", "");
+        return json;
+    }
+
+    public async void DeleteSelectedWorld()
+    {
+        Debug.Log("🗑️ DeleteSelectedWorld aangeroepen");
+
+        if (selectedWorld == null)
+        {
+            feedbackText.text = "❌ Geen wereld geselecteerd!";
+            Debug.LogWarning("⚠️ Geen wereld geselecteerd bij verwijderen.");
+            return;
+        }
+
+        var response = await WebClient.SendDeleteRequest($"/environment2D/{selectedWorld.Id}");
+
+        if (response is WebRequestData<string> || response is WebRequestData<object>)
+        {
+            Debug.Log("✅ Wereld verwijderd!");
+            LoadWorldSlots();
+        }
+        else
+        {
+            Debug.LogError("❌ Fout bij verwijderen van wereld!");
+            feedbackText.text = "❌ Fout bij verwijderen van wereld!";
         }
     }
 }

@@ -747,8 +747,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0.000022888, y: 1.762001}
-  m_SizeDelta: {x: 415.623, y: 52.475}
+  m_AnchoredPosition: {x: 4.966, y: 1.762001}
+  m_SizeDelta: {x: 860.78, y: 52.475}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &772766944
 MonoBehaviour:
@@ -1825,8 +1825,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 2.125, y: 65}
-  m_SizeDelta: {x: 411.373, y: 52.4751}
+  m_AnchoredPosition: {x: 4.969, y: 65}
+  m_SizeDelta: {x: 860.784, y: 52.4751}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1433698553
 MonoBehaviour:
@@ -2430,7 +2430,8 @@ MonoBehaviour:
   errorMessage: {fileID: 1681076609}
   loginButton: {fileID: 1851345370}
   registerButton: {fileID: 677239080}
-  userApiClient: {fileID: 0}
+  userApiClient: {fileID: 8985233327238491438}
+  webClient: {fileID: 0}
 --- !u!1 &1972567059
 GameObject:
   m_ObjectHideFlags: 0
@@ -2560,6 +2561,7 @@ MonoBehaviour:
   loginButton: {fileID: 1851345370}
   registerButton: {fileID: 677239080}
   userApiClient: {fileID: 8985233327238491438}
+  webClient: {fileID: 0}
 --- !u!1001 &4258399753042907643
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2620,7 +2622,8 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    m_RemovedComponents:
+    - {fileID: 4135133476367448920, guid: f0eb12f104f777e4fb0e1fdfd7fd975b, type: 3}
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []

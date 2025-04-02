@@ -29,9 +29,9 @@ public class GetObjects : MonoBehaviour
             Environment2D worldData = dataResponse.Data;
 
             // ✅ Set world size correctly
-            worldContainer.localScale = new Vector3(worldData.maxWidth, worldData.maxHeight, 1);
+            worldContainer.localScale = new Vector3(worldData.MaxWidth, worldData.MaxHeight, 1);
 
-            Debug.Log($"🌍 World Size Set: {worldData.maxWidth}x{worldData.maxHeight}");
+            Debug.Log($"🌍 World Size Set: {worldData.MaxWidth}x{worldData.MaxHeight}");
         }
         else if (response is WebRequestError errorResponse)
         {

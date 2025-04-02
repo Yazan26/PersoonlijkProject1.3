@@ -26,7 +26,7 @@ public class Environment2DApiClient : MonoBehaviour
 
     public async Awaitable<IWebRequestReponse> CreateEnvironment(Environment2D environment)
     {
-        string route = "/Environment2D";
+        string route = "/Environment2D/Createworld";
         string data = JsonUtility.ToJson(environment);
         Debug.Log("📡 Verzonden JSON: " + data); // ✅ Log om te checken TBREMOVED
 

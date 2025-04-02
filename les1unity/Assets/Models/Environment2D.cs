@@ -10,13 +10,13 @@ using UnityEngine;
 [Serializable]
 public class Environment2D
 {
-    public string id;
+    public string Id;
 
-    public string name;
+    public string Name;
 
-    public int maxWidth;
+    public int MaxWidth;
 
-    public int maxHeight;
+    public int MaxHeight;
 
-    public string ownerUserId;
+    public string OwnerUserID;
 }
