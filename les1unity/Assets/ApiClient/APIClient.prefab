@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 1542438608101083073}
   - component: {fileID: 2180769261903935080}
   - component: {fileID: 4876851875216425418}
-  - component: {fileID: 2272461035333135978}
   m_Layer: 0
   m_Name: APIClient
   m_TagString: Untagged
@@ -88,36 +87,3 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   baseUrl: https://avansict2233343.azurewebsites.net
---- !u!114 &2272461035333135978
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 749426263118363324}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb0e0ac4980c1ae4c9e7561da401f971, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  user:
-    email: 
-    password: 
-  environment2D:
-    id: 
-    name: 
-    maxLength: 0
-    maxHeight: 0
-  object2D:
-    id: 
-    environmentId: 
-    prefabId: 
-    positionX: 0
-    positionY: 0
-    scaleX: 0
-    scaleY: 0
-    rotationZ: 0
-    sortingLayer: 0
-  userApiClient: {fileID: 2180769261903935080}
-  enviroment2DApiClient: {fileID: 8583953374983115039}
-  object2DApiClient: {fileID: 1542438608101083073}
