@@ -35,10 +35,7 @@ public class DraggingObject2D : MonoBehaviour
 
         if (!isDragging)
         {
-            // 👇 Verberg menu als hij geplaatst is
             objectManager.ShowMenu();
-
-            // 🧠 Sla op in de backend
             SavePlacedObject();
         }
     }
@@ -49,7 +46,6 @@ public class DraggingObject2D : MonoBehaviour
 
         Object2D object2D = new Object2D
         {
-            id = "", // laat backend een nieuwe genereren
             environmentId = environmentId,
             prefabId = gameObject.name,
             positionX = transform.position.x,
@@ -66,18 +62,25 @@ public class DraggingObject2D : MonoBehaviour
             return;
         }
 
+        string jsonToPost = JsonUtility.ToJson(object2D);
+        Debug.Log("📤 POST JSON:\n" + jsonToPost);
+
         var response = await apiClient.CreateObject2D(object2D);
 
         if (response is WebRequestData<Object2D> objData)
         {
             savedId = objData.Data.id;
             Debug.Log($"💾 Object opgeslagen met ID: {savedId}");
+
+            string jsonResponse = JsonUtility.ToJson(objData.Data, true);
+            Debug.Log("📥 RESPONSE JSON:\n" + jsonResponse);
         }
         else
         {
             Debug.LogError("❌ Object is niet opgeslagen, geen geldig response!");
         }
     }
+
 
     private async void DeleteObject()
     {

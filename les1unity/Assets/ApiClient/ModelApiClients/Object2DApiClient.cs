@@ -9,7 +9,7 @@ public class Object2DApiClient : MonoBehaviour
 
     public async Awaitable<IWebRequestReponse> ReadObject2Ds(string environmentId)
     {
-        string route = "/environments/" + environmentId + "/objects";
+        string route = "/Object2D/" + environmentId;
 
         IWebRequestReponse webRequestResponse = await webClient.SendGetRequest(route);
         return ParseObject2DListResponse(webRequestResponse);
@@ -17,16 +17,26 @@ public class Object2DApiClient : MonoBehaviour
 
     public async Awaitable<IWebRequestReponse> CreateObject2D(Object2D object2D)
     {
-        string route = "/environments/" + object2D.environmentId + "/objects";
-        string data = JsonUtility.ToJson(object2D);
+        string route = "/Object2D";
+        string json = JsonUtility.ToJson(object2D);
+        json = RemoveIdFieldFromJson(json); // 👈 hier filteren we id eruit
 
-        IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, data);
+        Debug.Log("📤 POST JSON zonder id:\n" + json);
+
+        IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, json);
         return ParseObject2DResponse(webRequestResponse);
+    }
+
+    private string RemoveIdFieldFromJson(string json)
+    {
+        json = json.Replace("\"id\":\"\",", "");
+        json = json.Replace(",\"id\":\"\"", "");
+        return json;
     }
 
     public async Awaitable<IWebRequestReponse> UpdateObject2D(Object2D object2D)
     {
-        string route = "/environments/" + object2D.environmentId + "/objects/" + object2D.id;
+        string route = "/Object2D/" + object2D.id;
         string data = JsonUtility.ToJson(object2D);
 
         return await webClient.SendPutRequest(route, data);
@@ -43,14 +53,30 @@ public class Object2DApiClient : MonoBehaviour
         switch (webRequestResponse)
         {
             case WebRequestData<string> data:
-                Debug.Log("Response data raw: " + data.Data);
-                Object2D object2D = JsonUtility.FromJson<Object2D>(data.Data);
-                WebRequestData<Object2D> parsedWebRequestData = new WebRequestData<Object2D>(object2D);
-                return parsedWebRequestData;
+                Debug.Log("📥 Response data raw:\n" + data.Data);
+                string fixedJson = FixJsonCasing(data.Data);
+                Object2D object2D = JsonUtility.FromJson<Object2D>(fixedJson);
+                return new WebRequestData<Object2D>(object2D);
             default:
                 return webRequestResponse;
         }
     }
+    private string FixJsonCasing(string json)
+    {
+        return json
+            .Replace("\"Id\"", "\"id\"")
+            .Replace("\"Environment2DID\"", "\"environmentId\"")
+            .Replace("\"PrefabId\"", "\"prefabId\"")
+            .Replace("\"PositionX\"", "\"positionX\"")
+            .Replace("\"PositionY\"", "\"positionY\"")
+            .Replace("\"ScaleX\"", "\"scaleX\"")
+            .Replace("\"ScaleY\"", "\"scaleY\"")
+            .Replace("\"RotationZ\"", "\"rotationZ\"")
+            .Replace("\"SortingLayer\"", "\"sortingLayer\"")
+            .Replace("\"UserID\"", "\"userId\""); // alleen als je ooit wil meegeven
+    }
+
+
 
     private IWebRequestReponse ParseObject2DListResponse(IWebRequestReponse webRequestResponse)
     {

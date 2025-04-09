@@ -11,12 +11,7 @@ public class EnvironmentLoader : MonoBehaviour
     private async void Start()
     {
         string environmentId = PlayerPrefs.GetString("SelectedWorldId");
-        if (string.IsNullOrEmpty(environmentId))
-        {
-            Debug.LogError("❌ Geen SelectedWorldId gevonden");
-            return;
-        }
-
+        
         var response = await objectClient.ReadObject2Ds(environmentId);
         if (response is WebRequestData<List<Object2D>> objectData)
         {

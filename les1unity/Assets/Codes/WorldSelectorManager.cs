@@ -15,7 +15,13 @@ public class WorldSelectorManager : MonoBehaviour
     public TMP_Text feedbackText;
 
     public Button[] worldButtons;
-    public Button refreshButton, deleteButton, loadButton, createButton, showpanelButton, cancelbutton;
+    public Button refreshButton,
+        deleteButton,
+        loadButton, 
+        createButton, 
+        showpanelButton, 
+        cancelbutton,
+        LogOutButton;
 
     [Header("Input Fields")] 
     public TMP_InputField wereldNaamInput;
@@ -38,10 +44,15 @@ public class WorldSelectorManager : MonoBehaviour
         createButton.onClick.AddListener(CreateNewWorld);
         showpanelButton.onClick.AddListener(ShowPanel);
         cancelbutton.onClick.AddListener(CancelWorld);
-
+        LogOutButton.onClick.AddListener(logout);
         LoadWorldSlots();
     }
-
+void logout()
+{
+        PlayerPrefs.DeleteKey("SelectedWorldId");
+        PlayerPrefs.Save();
+        SceneManager.LoadScene("LoginScene");
+    }
     void ShowPanel()
     {
         Debug.Log("📂 Create Panel tonen...");
@@ -178,7 +189,7 @@ public class WorldSelectorManager : MonoBehaviour
         feedbackText.text = $"🌍 Laden van wereld: {selectedWorld.Name}";
         Debug.Log($"🚀 Laden van wereldscene voor wereld: {selectedWorld.Name} (id: {selectedWorld.Id})");
 
-        SceneManager.LoadScene("SeeEnvironmentScene");
+        SceneManager.LoadScene("EnvironmentCreatorScene");
     }
 
     public async void CreateNewWorld()
