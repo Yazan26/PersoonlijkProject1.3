@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
+using System.Threading.Tasks;
 public class ObjectManager : MonoBehaviour
 {
     // Menu om objecten vanuit te plaatsen
@@ -31,8 +32,9 @@ public class ObjectManager : MonoBehaviour
         objects2D.isDragging = true;
     }
 
-    public void Start()
+    public async void Start()
     {
+        await LoadExistingObjects();
         Backbutton.onClick.AddListener(BackToWorldCreator);
     }
 
@@ -44,12 +46,21 @@ public class ObjectManager : MonoBehaviour
     // Methode om het menu te tonen
     public void ShowMenu()
     {
+       
         UISideMenu.SetActive(true);
     }
     
-    private async System.Threading.Tasks.Task LoadExistingObjects()
+    private async Task LoadExistingObjects()
     {
         string environmentId = PlayerPrefs.GetString("SelectedWorldId");
+
+        if (string.IsNullOrEmpty(environmentId))
+        {
+            Debug.LogError("⚠️ Geen SelectedWorldId gevonden in PlayerPrefs!");
+            return;
+        }
+
+        Debug.Log($"🌍 Objecten ophalen voor environmentId: {environmentId}");
 
         var response = await objectApiClient.ReadObject2Ds(environmentId);
 
@@ -62,11 +73,16 @@ public class ObjectManager : MonoBehaviour
                 SpawnObject(obj);
             }
         }
+        else if (response is WebRequestData<string> error)
+        {
+            Debug.LogError($"❌ Fout bij ophalen objecten: {error.Data}");
+        }
         else
         {
-            Debug.LogError("❌ Kon objecten niet ophalen uit de database.");
+            Debug.LogError("❌ Kon objecten niet ophalen uit de database (response was niet van het verwachte type).");
         }
     }
+
 
     private void SpawnObject(Object2D objData)
     {

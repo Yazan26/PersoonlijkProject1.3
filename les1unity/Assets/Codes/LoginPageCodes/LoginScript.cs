@@ -87,13 +87,13 @@ public class LoginScript : MonoBehaviour
             case WebRequestError errorResponse:
                 if (errorResponse.ErrorMessage.Contains("401"))
                 {
-                    errorMessage.text = "❌ Onjuist wachtwoord of gebruikersnaam.";
+                    errorMessage.text = "Onjuist wachtwoord of Email.";
                 }
                 else
                 {
-                    errorMessage.text = "❌ Login mislukt. Probeer opnieuw.";
+                    errorMessage.text = "Login mislukt. Probeer opnieuw.";
                 }
-                Debug.LogError("❌ Login failed: " + errorResponse.ErrorMessage);
+                Debug.LogError("Login failed: " + errorResponse.ErrorMessage);
                 break;
 
             default:
@@ -135,19 +135,19 @@ public class LoginScript : MonoBehaviour
         {
             case WebRequestData<string>:
                 Debug.Log("✅ Registratie succesvol!");
-                errorMessage.text = "✅ Registratie succesvol! Je kunt nu inloggen.";
+                errorMessage.text = "Registratie succesvol! Je kunt nu inloggen.";
                 break;
 
             case WebRequestError errorResponse:
                 if (errorResponse.ErrorMessage.Contains("duplicate"))
                 {
-                    errorMessage.text = "❌ Deze gebruikersnaam is al in gebruik!";
+                    errorMessage.text = "Deze Email is al in gebruik!";
                 }
                 else
                 {
-                    errorMessage.text = "❌ Registratie mislukt: " + errorResponse.ErrorMessage;
+                    errorMessage.text = "Registratie mislukt: " + errorResponse.ErrorMessage;
                 }
-                Debug.LogError("❌ Registratie mislukt: " + errorResponse.ErrorMessage);
+                Debug.LogError("Registratie mislukt: " + errorResponse.ErrorMessage);
                 break;
 
             default:
