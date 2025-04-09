@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 /**
  * Bijzonderheden wegens beperkingen van JsonUtility:
@@ -9,22 +10,22 @@ using UnityEngine;
 [Serializable]
 public class Object2D
 {
-    public string id;
+    public string Id;
 
-    public string environmentId;
+    public string Environment2DID;
 
-    public string prefabId;
+ public string PrefabId;
 
-    public float positionX;
+     public float PositionX;
 
-    public float positionY;
+     public float PositionY;
 
-    public float scaleX;
+     public float ScaleX;
 
-    public float scaleY;
+     public float ScaleY;
 
-    public float rotationZ;
+    public float RotationZ;
 
-    public int sortingLayer;
+    public int SortingLayer;
     
 }

@@ -19,24 +19,44 @@ public class Object2DApiClient : MonoBehaviour
     {
         string route = "/Object2D";
         string json = JsonUtility.ToJson(object2D);
-        json = RemoveIdFieldFromJson(json); // 👈 hier filteren we id eruit
+        json = RemoveIdFieldFromJson(json); // als je dat nog gebruikt
+        Debug.Log("📤 POST JSON:\n" + json);
 
-        Debug.Log("📤 POST JSON zonder id:\n" + json);
+        IWebRequestReponse response = await webClient.SendPostRequest(route, json);
 
-        IWebRequestReponse webRequestResponse = await webClient.SendPostRequest(route, json);
-        return ParseObject2DResponse(webRequestResponse);
+        Debug.Log($"📬 RESPONSE TYPE: {response?.GetType().Name ?? "null"}");
+
+        if (response == null)
+        {
+            Debug.LogError("❌ Response is null!");
+        }
+        else if (response is WebRequestData<string> str)
+        {
+            Debug.Log("📥 WebRequestData<string> ontvangen:\n" + str.Data);
+        }
+        else if (response is WebRequestData<object> obj)
+        {
+            Debug.Log("📦 WebRequestData<object> ontvangen:\n" + obj.Data);
+        }
+        else
+        {
+            Debug.LogWarning("⚠️ Onbekend response type ontvangen:\n" + response.ToString());
+        }
+        return ParseObject2DResponse(response);
     }
+
+
 
     private string RemoveIdFieldFromJson(string json)
     {
-        json = json.Replace("\"id\":\"\",", "");
-        json = json.Replace(",\"id\":\"\"", "");
+        json = json.Replace("\"Id\":\"\",", "");
+        json = json.Replace(",\"Id\":\"\"", "");
         return json;
     }
 
     public async Awaitable<IWebRequestReponse> UpdateObject2D(Object2D object2D)
     {
-        string route = "/Object2D/" + object2D.id;
+        string route = "/Object2D/" + object2D.Id;
         string data = JsonUtility.ToJson(object2D);
 
         return await webClient.SendPutRequest(route, data);
@@ -72,8 +92,7 @@ public class Object2DApiClient : MonoBehaviour
             .Replace("\"ScaleX\"", "\"scaleX\"")
             .Replace("\"ScaleY\"", "\"scaleY\"")
             .Replace("\"RotationZ\"", "\"rotationZ\"")
-            .Replace("\"SortingLayer\"", "\"sortingLayer\"")
-            .Replace("\"UserID\"", "\"userId\""); // alleen als je ooit wil meegeven
+            .Replace("\"SortingLayer\"", "\"sortingLayer\"");
     }
 
 

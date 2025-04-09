@@ -1,122 +1,79 @@
-using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-using System.Threading.Tasks;
 public class ObjectManager : MonoBehaviour
 {
-    // Menu om objecten vanuit te plaatsen
     public GameObject UISideMenu;
-    // Lijst met objecten die geplaatst kunnen worden die overeenkomen met de prefabs in de prefabs map
-    public List<GameObject> prefabObjects;
+    public List<GameObject> prefabObjects; // prefab must contain Object2DInstance
     public Object2DApiClient objectApiClient;
-
     public Button Backbutton;
-    // Lijst met objecten die geplaatst zijn in de wereld
-    private List<GameObject> placedObjects;
 
-    // Methode om een nieuw 2D object te plaatsen
+    public void ShowMenu() => UISideMenu.SetActive(true);
+
+    private async void Start()
+    {
+        await LoadExistingObjects();
+        Backbutton.onClick.AddListener(() => SceneManager.LoadScene("WorldSelector"));
+    }
+
     public void PlaceNewObject2D(int index)
     {
         UISideMenu.SetActive(false);
 
-        GameObject instanceOfPrefab = Instantiate(prefabObjects[index], Vector3.zero, Quaternion.identity);
+        GameObject prefab = prefabObjects[index];
+        GameObject instance = Instantiate(prefab, Vector3.zero, Quaternion.identity);
 
-        DraggingObject2D objects2D = instanceOfPrefab.GetComponent<DraggingObject2D>();
-
-        objects2D.objectManager = this;
-        objects2D.apiClient = objectApiClient; // ✅ hier geef je de API client mee
-
-        objects2D.isDragging = true;
+        var logic = instance.GetComponent<DraggingObject2D>();
+        logic.Initialize(this, objectApiClient);
+        logic.isDragging = true;
     }
 
-    public async void Start()
-    {
-        await LoadExistingObjects();
-        Backbutton.onClick.AddListener(BackToWorldCreator);
-    }
-
-    public void BackToWorldCreator()
-    {
-        SceneManager.LoadScene("WorldSelector");
-    }
-    
-    // Methode om het menu te tonen
-    public void ShowMenu()
-    {
-       
-        UISideMenu.SetActive(true);
-    }
-    
     private async Task LoadExistingObjects()
     {
         string environmentId = PlayerPrefs.GetString("SelectedWorldId");
 
         if (string.IsNullOrEmpty(environmentId))
         {
-            Debug.LogError("⚠️ Geen SelectedWorldId gevonden in PlayerPrefs!");
+            Debug.LogError("⚠️ Geen SelectedWorldId gevonden.");
             return;
         }
-
-        Debug.Log($"🌍 Objecten ophalen voor environmentId: {environmentId}");
 
         var response = await objectApiClient.ReadObject2Ds(environmentId);
 
         if (response is WebRequestData<List<Object2D>> data)
         {
-            Debug.Log($"📦 {data.Data.Count} objecten geladen");
-
             foreach (Object2D obj in data.Data)
-            {
-                SpawnObject(obj);
-            }
-        }
-        else if (response is WebRequestData<string> error)
-        {
-            Debug.LogError($"❌ Fout bij ophalen objecten: {error.Data}");
+                SpawnFromData(obj);
         }
         else
         {
-            Debug.LogError("❌ Kon objecten niet ophalen uit de database (response was niet van het verwachte type).");
+            Debug.LogError("❌ Objecten konden niet worden opgehaald.");
         }
     }
 
-
-    private void SpawnObject(Object2D objData)
+    private void SpawnFromData(Object2D data)
     {
-        GameObject prefab = Resources.Load<GameObject>("Prefabs/" + objData.prefabId);
+        GameObject prefab = Resources.Load<GameObject>("Prefabs/" + data.PrefabId.Replace("(Clone)", ""));
         if (prefab == null)
         {
-            Debug.LogError($"❌ Prefab '{objData.prefabId}' niet gevonden in Resources/Prefabs/");
+            Debug.LogError($"❌ Prefab '{data.PrefabId}' niet gevonden.");
             return;
         }
 
-        GameObject instance = Instantiate(prefab, new Vector3(objData.positionX, objData.positionY, 0), Quaternion.Euler(0, 0, objData.rotationZ));
-        instance.transform.localScale = new Vector3(objData.scaleX, objData.scaleY, 1);
+        GameObject instance = Instantiate(prefab, new Vector3(data.PositionX, data.PositionY, 0), Quaternion.Euler(0, 0, data.RotationZ));
+        instance.transform.localScale = new Vector3(data.ScaleX, data.ScaleY, 1);
 
         SpriteRenderer renderer = instance.GetComponentInChildren<SpriteRenderer>();
         if (renderer != null)
-            renderer.sortingOrder = objData.sortingLayer;
+            renderer.sortingOrder = data.SortingLayer;
 
-   
+        DraggingObject2D logic = instance.GetComponent<DraggingObject2D>();
+        logic.Initialize(this, objectApiClient);
+        logic.SetObjectData(data);
 
-        // ✅ Koppel ID terug aan DraggingObject2D zodat Delete werkt
-        DraggingObject2D dragScript = instance.GetComponent<DraggingObject2D>();
-        if (dragScript != null)
-        {
-            dragScript.SetSavedId(objData.id);
-        }
-
-        Debug.Log($"✅ Object geplaatst: {objData.prefabId} @ {objData.positionX}, {objData.positionY}");
-    }
-
-
-    // Methode om de huidige sc�ne te resetten
-    public void Reset()
-    {
-        // Laad de huidige sc�ne opnieuw
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        Debug.Log($"✅ Object geladen: {data.PrefabId} ({data.Id})");
     }
 }

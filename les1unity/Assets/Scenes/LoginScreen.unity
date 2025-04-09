@@ -2561,7 +2561,7 @@ MonoBehaviour:
   loginButton: {fileID: 1851345370}
   registerButton: {fileID: 677239080}
   userApiClient: {fileID: 8985233327238491438}
-  webClient: {fileID: 0}
+  webClient: {fileID: 8985233327238491439}
 --- !u!1001 &4258399753042907643
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2637,6 +2637,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fed4f7f0e67c302469248224d4bac5a3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &8985233327238491439 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 1483920557258638391, guid: f0eb12f104f777e4fb0e1fdfd7fd975b, type: 3}
+  m_PrefabInstance: {fileID: 4258399753042907643}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b2c86bd7546f1f94e9c106ea19a09157, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807

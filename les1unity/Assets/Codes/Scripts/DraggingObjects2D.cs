@@ -3,88 +3,101 @@ using UnityEngine;
 
 public class DraggingObject2D : MonoBehaviour
 {
-    public ObjectManager objectManager;
-    public bool isDragging = false;
+    public Object2D objectData;
     public Object2DApiClient apiClient;
-    private string savedId = "";
+    public string environmentId;
+    public bool isDragging = false;
+    public ObjectManager objectManager;
+
     private void Start()
     {
-      
+        // Zorg dat het object weet in welke wereld het zit
+        environmentId = PlayerPrefs.GetString("SelectedWorldId");
+        objectData.Environment2DID = environmentId;
     }
 
-    public void Update()
+    private void Update()
     {
         if (isDragging)
-            this.transform.position = GetMousePosition();
-        if (Input.GetMouseButtonDown(1)) // Rechtermuisknop
         {
-            if (IsMouseOverThisObject() && !isDragging && savedId != "")
+            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+            transform.position = new Vector3(mousePosition.x, mousePosition.y, 0);
+        }
+
+        if (Input.GetMouseButtonDown(1)) // rechtermuisklik om te verwijderen
+        {
+            if (IsMouseOverThisObject() && !isDragging && !string.IsNullOrEmpty(objectData.Id))
             {
                 DeleteObject();
             }
         }
+    }
 
-    }
-    public void SetSavedId(string id)
-    {
-        savedId = id;
-    }
     private void OnMouseUpAsButton()
     {
         isDragging = !isDragging;
 
+        objectManager.ShowMenu();
+
+        objectData.PrefabId = gameObject.name.Replace("(Clone)", "");
+        objectData.PositionX = transform.position.x;
+        objectData.PositionY = transform.position.y;
+        objectData.ScaleX = transform.localScale.x;
+        objectData.ScaleY = transform.localScale.y;
+        objectData.RotationZ = transform.rotation.eulerAngles.z;
+        objectData.SortingLayer = GetComponentInChildren<SpriteRenderer>()?.sortingOrder ?? 0;
+
         if (!isDragging)
         {
-            objectManager.ShowMenu();
-            SavePlacedObject();
+            if (string.IsNullOrEmpty(objectData.Id))
+                CreateObject();
+            else
+                UpdateObject();
         }
     }
 
-    private async void SavePlacedObject()
+    public void Initialize(ObjectManager manager, Object2DApiClient client)
     {
-        string environmentId = PlayerPrefs.GetString("SelectedWorldId");
+        objectManager = manager;
+        apiClient = client;
+    }
 
-        Object2D object2D = new Object2D
+    public void SetObjectData(Object2D data)
+    {
+        objectData = data;
+        environmentId = data.Environment2DID;
+    }
+
+    private async void CreateObject()
+    {
+        var response = await apiClient.CreateObject2D(objectData);
+        if (response is WebRequestData<Object2D> obj)
         {
-            environmentId = environmentId,
-            prefabId = gameObject.name,
-            positionX = transform.position.x,
-            positionY = transform.position.y,
-            scaleX = transform.localScale.x,
-            scaleY = transform.localScale.y,
-            rotationZ = transform.rotation.eulerAngles.z,
-            sortingLayer = GetComponentInChildren<SpriteRenderer>()?.sortingOrder ?? 0
-        };
-
-        if (apiClient == null)
-        {
-            Debug.LogError("❌ apiClient is null! Is het wel toegewezen via ObjectManager?");
-            return;
-        }
-
-        string jsonToPost = JsonUtility.ToJson(object2D);
-        Debug.Log("📤 POST JSON:\n" + jsonToPost);
-
-        var response = await apiClient.CreateObject2D(object2D);
-
-        if (response is WebRequestData<Object2D> objData)
-        {
-            savedId = objData.Data.id;
-            Debug.Log($"💾 Object opgeslagen met ID: {savedId}");
-
-            string jsonResponse = JsonUtility.ToJson(objData.Data, true);
-            Debug.Log("📥 RESPONSE JSON:\n" + jsonResponse);
+            objectData.Id = obj.Data.Id;
+            Debug.Log($"✅ Object aangemaakt met id: {objectData.Id}");
         }
         else
         {
-            Debug.LogError("❌ Object is niet opgeslagen, geen geldig response!");
+            Debug.LogError("❌ Kon object niet aanmaken.");
         }
     }
 
+    private async void UpdateObject()
+    {
+        var response = await apiClient.UpdateObject2D(objectData);
+        if (response is WebRequestData<string>)
+        {
+            Debug.Log("🔄 Object geüpdatet!");
+        }
+        else
+        {
+            Debug.LogError("❌ Kon object niet updaten.");
+        }
+    }
 
     private async void DeleteObject()
     {
-        var response = await apiClient.DeleteObject2D(savedId);
+        var response = await apiClient.DeleteObject2D(objectData.Id);
         if (response is WebRequestData<string> or WebRequestData<object>)
         {
             Debug.Log("🗑️ Object verwijderd!");
@@ -95,20 +108,11 @@ public class DraggingObject2D : MonoBehaviour
             Debug.LogError("❌ Verwijderen mislukt!");
         }
     }
-    
 
-    private Vector3 GetMousePosition()
-    {
-        Vector3 positionInWorld = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        positionInWorld.z = 0;
-        return positionInWorld;
-    }
     private bool IsMouseOverThisObject()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         Collider2D hit = Physics2D.OverlapPoint(mousePos);
-
-        return hit != null && hit.gameObject == this.gameObject;
+        return hit != null && hit.gameObject == gameObject;
     }
-
 }
