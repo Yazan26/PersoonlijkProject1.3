@@ -106,13 +106,13 @@ public class DraggingObject2D : MonoBehaviour
         Debug.Log("🆕 CreateObject aangeroepen");
 
         var response = await apiClient.CreateObject2D(objectData);
+
         if (response is WebRequestData<Object2D> obj)
         {
             objectData.Id = obj.Data.Id;
             Debug.Log($"✅ Object aangemaakt met id: {objectData.Id}");
 
-            // 🔄 Forceren van directe update met verse ID
-            UpdateObject();
+            UpdateObject(); // update direct met ID nu correct
         }
         else
         {
