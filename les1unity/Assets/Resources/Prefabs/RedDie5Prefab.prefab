@@ -76,7 +76,7 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: 5747842059322634366, guid: 3b6004940321a5445b2fe9f40f079e21, type: 3}
+  m_Sprite: {fileID: 5086811837738618643, guid: 85834923583168a46aeae39b918f6405, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -114,8 +114,8 @@ Transform:
   m_GameObject: {fileID: 2319415190314549223}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: -0.4248742, y: 0.5572768, z: 0}
+  m_LocalScale: {x: 0.6048, y: 0.6048, z: 0.6048}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 7777579705381657560}
@@ -133,8 +133,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 02b76933c6315b644a68e7586d9dc97b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  objectManager: {fileID: 0}
+  objectData:
+    Id: 
+    Environment2DID: 
+    PrefabId: 
+    PositionX: 0
+    PositionY: 0
+    ScaleX: 0
+    ScaleY: 0
+    RotationZ: 0
+    SortingLayer: 0
+  apiClient: {fileID: 0}
+  environmentId: 
   isDragging: 0
+  objectManager: {fileID: 0}
 --- !u!61 &206695286524191361
 BoxCollider2D:
   m_ObjectHideFlags: 0

@@ -76,4 +76,18 @@ public class ObjectManager : MonoBehaviour
 
         Debug.Log($"✅ Object geladen: {data.PrefabId} ({data.Id})");
     }
+    public async void DeleteAllObjects()
+    {
+        foreach (var obj in FindObjectsOfType<DraggingObject2D>())
+        {
+            if (!string.IsNullOrEmpty(obj.objectData.Id))
+            {
+                await obj.apiClient.DeleteObject2D(obj.objectData.Id);
+            }
+            Destroy(obj.gameObject);
+        }
+
+        Debug.Log("🔥 Alle objecten verwijderd!");
+    }
+
 }

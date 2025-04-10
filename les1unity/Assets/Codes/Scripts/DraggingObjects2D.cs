@@ -22,6 +22,26 @@ public class DraggingObject2D : MonoBehaviour
         {
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             transform.position = new Vector3(mousePosition.x, mousePosition.y, 0);
+
+            // ↺ Horizontaal roteren met Q en E
+            if (Input.GetKeyDown(KeyCode.Q))
+            {
+                transform.Rotate(0f, 0f, 15f); // linksom
+            }
+            if (Input.GetKeyDown(KeyCode.E))
+            {
+                transform.Rotate(0f, 0f, -15f); // rechtsom
+            }
+
+            // 🔃 Verticale flip met W en S (via scale)
+            if (Input.GetKeyDown(KeyCode.W))
+            {
+                transform.localScale = new Vector3(transform.localScale.x, Mathf.Abs(transform.localScale.y), transform.localScale.z);
+            }
+            if (Input.GetKeyDown(KeyCode.S))
+            {
+                transform.localScale = new Vector3(transform.localScale.x, -Mathf.Abs(transform.localScale.y), transform.localScale.z);
+            }
         }
 
         if (Input.GetMouseButtonDown(1)) // rechtermuisklik om te verwijderen
@@ -31,7 +51,13 @@ public class DraggingObject2D : MonoBehaviour
                 DeleteObject();
             }
         }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            objectManager.DeleteAllObjects();
+        }
+
     }
+
 
     private void OnMouseUpAsButton()
     {
@@ -115,4 +141,19 @@ public class DraggingObject2D : MonoBehaviour
         Collider2D hit = Physics2D.OverlapPoint(mousePos);
         return hit != null && hit.gameObject == gameObject;
     }
+    
+    public async void DeleteAllObjects()
+    {
+        foreach (var obj in FindObjectsOfType<DraggingObject2D>())
+        {
+            if (!string.IsNullOrEmpty(obj.objectData.Id))
+            {
+                await obj.apiClient.DeleteObject2D(obj.objectData.Id);
+            }
+            Destroy(obj.gameObject);
+        }
+
+        Debug.Log("🔥 Alle objecten verwijderd!");
+    }
+
 }
