@@ -45,8 +45,44 @@ public class WorldSelectorManager : MonoBehaviour
         showpanelButton.onClick.AddListener(ShowPanel);
         cancelbutton.onClick.AddListener(CancelWorld);
         LogOutButton.onClick.AddListener(logout);
+        
+        wereldNaamInput.characterLimit = 25;
+
+        // Add validation for input fields
+        wereldNaamInput.onEndEdit.AddListener(ValidateWorldName);
+        maxHoogteInput.onEndEdit.AddListener(ValidateMaxHeight);
+        maxBreedteInput.onEndEdit.AddListener(ValidateMaxWidth);
+
         LoadWorldSlots();
     }
+    
+    private void ValidateWorldName(string input)
+    {
+        if (string.IsNullOrWhiteSpace(input) || input.Length > 25)
+        {
+            feedbackText.text = "❌ Wereldnaam moet tussen 1 en 25 tekens zijn!";
+            Debug.LogWarning("⚠️ Ongeldige wereldnaam ingevoerd.");
+        }
+    }
+
+    private void ValidateMaxHeight(string input)
+    {
+        if (!int.TryParse(input, out int value) || value < 10 || value > 100)
+        {
+            feedbackText.text = "❌ MaxHeight moet een getal tussen 10 en 100 zijn!";
+            Debug.LogWarning("⚠️ Ongeldige MaxHeight ingevoerd.");
+        }
+    }
+
+    private void ValidateMaxWidth(string input)
+    {
+        if (!int.TryParse(input, out int value) || value < 20 || value > 200)
+        {
+            feedbackText.text = "❌ MaxWidth moet een getal tussen 20 en 200 zijn!";
+            Debug.LogWarning("⚠️ Ongeldige MaxWidth ingevoerd.");
+        }
+    }
+    
 void logout()
 {
         PlayerPrefs.DeleteKey("SelectedWorldId");
@@ -91,7 +127,6 @@ void logout()
         }
         else
         {
-            Debug.LogError("❌ Fout bij ophalen van werelden.");
             feedbackText.text = "❌ Fout bij laden van werelden!";
         }
     }

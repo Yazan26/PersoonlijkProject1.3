@@ -22,7 +22,6 @@ public class DraggingObject2D : MonoBehaviour
         {
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             transform.position = new Vector3(mousePosition.x, mousePosition.y, 0);
-
             // ↺ Horizontaal roteren met Q en E
             if (Input.GetKeyDown(KeyCode.Q))
             {
@@ -32,7 +31,6 @@ public class DraggingObject2D : MonoBehaviour
             {
                 transform.Rotate(0f, 0f, -15f); // rechtsom
             }
-
             // 🔃 Verticale flip met W en S (via scale)
             if (Input.GetKeyDown(KeyCode.W))
             {
@@ -51,6 +49,7 @@ public class DraggingObject2D : MonoBehaviour
                 DeleteObject();
             }
         }
+        
         if (Input.GetKeyDown(KeyCode.R))
         {
             objectManager.DeleteAllObjects();
@@ -138,9 +137,19 @@ public class DraggingObject2D : MonoBehaviour
     private bool IsMouseOverThisObject()
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        Collider2D hit = Physics2D.OverlapPoint(mousePos);
-        return hit != null && hit.gameObject == gameObject;
+        RaycastHit2D[] hits = Physics2D.RaycastAll(mousePos, Vector2.zero);
+
+        foreach (RaycastHit2D hit in hits)
+        {
+            if (hit.collider != null && hit.collider.gameObject == gameObject)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
+
     
     public async void DeleteAllObjects()
     {
