@@ -54,6 +54,14 @@ public class DraggingObject2D : MonoBehaviour
         {
             objectManager.DeleteAllObjects();
         }
+        if (Input.GetKeyDown(KeyCode.V))
+        {
+            if (IsMouseOverThisObject() && !isDragging)
+            {
+                Debug.Log($"📦 Oppakken bestaand object met ID: {objectData.Id}");
+                isDragging = true;
+            }
+        }
 
     }
 
@@ -95,11 +103,16 @@ public class DraggingObject2D : MonoBehaviour
 
     private async void CreateObject()
     {
+        Debug.Log("🆕 CreateObject aangeroepen");
+
         var response = await apiClient.CreateObject2D(objectData);
         if (response is WebRequestData<Object2D> obj)
         {
             objectData.Id = obj.Data.Id;
             Debug.Log($"✅ Object aangemaakt met id: {objectData.Id}");
+
+            // 🔄 Forceren van directe update met verse ID
+            UpdateObject();
         }
         else
         {
@@ -107,8 +120,10 @@ public class DraggingObject2D : MonoBehaviour
         }
     }
 
+
     private async void UpdateObject()
     {
+        Debug.Log("✏️ UpdateObject aangeroepen");
         var response = await apiClient.UpdateObject2D(objectData);
         if (response is WebRequestData<string>)
         {
