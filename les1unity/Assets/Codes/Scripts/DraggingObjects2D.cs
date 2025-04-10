@@ -114,10 +114,6 @@ public class DraggingObject2D : MonoBehaviour
 
             UpdateObject(); // update direct met ID nu correct
         }
-        else
-        {
-            Debug.LogError("❌ Kon object niet aanmaken.");
-        }
     }
 
 
