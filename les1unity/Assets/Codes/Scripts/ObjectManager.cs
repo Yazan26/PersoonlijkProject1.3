@@ -9,15 +9,14 @@ public class ObjectManager : MonoBehaviour
     public GameObject UISideMenu;
     public List<GameObject> prefabObjects; // prefab must contain Object2DInstance
     public Object2DApiClient objectApiClient;
-    public Button Backbutton;
 
     public void ShowMenu() => UISideMenu.SetActive(true);
 
     private async void Start()
     {
         await LoadExistingObjects();
-        Backbutton.onClick.AddListener(() => SceneManager.LoadScene("WorldSelector"));
     }
+    
 
     public void PlaceNewObject2D(int index)
     {
@@ -56,33 +55,33 @@ public class ObjectManager : MonoBehaviour
 
     private void SpawnFromData(Object2D data)
     {
-        GameObject prefab = Resources.Load<GameObject>("Prefabs/" + data.PrefabId.Replace("(Clone)", ""));
+        GameObject prefab = Resources.Load<GameObject>("Prefabs/" + data.prefabId.Replace("(Clone)", ""));
         if (prefab == null)
         {
-            Debug.LogError($"❌ Prefab '{data.PrefabId}' niet gevonden.");
+            Debug.LogError($"❌ Prefab '{data.prefabId}' niet gevonden.");
             return;
         }
 
-        GameObject instance = Instantiate(prefab, new Vector3(data.PositionX, data.PositionY, 0), Quaternion.Euler(0, 0, data.RotationZ));
-        instance.transform.localScale = new Vector3(data.ScaleX, data.ScaleY, 1);
+        GameObject instance = Instantiate(prefab, new Vector3(data.positionX, data.positionY, 0), Quaternion.Euler(0, 0, data.rotationZ));
+        instance.transform.localScale = new Vector3(data.scaleX, data.scaleY, 1);
 
         SpriteRenderer renderer = instance.GetComponentInChildren<SpriteRenderer>();
         if (renderer != null)
-            renderer.sortingOrder = data.SortingLayer;
+            renderer.sortingOrder = data.sortingLayer;
 
         DraggingObject2D logic = instance.GetComponent<DraggingObject2D>();
         logic.Initialize(this, objectApiClient);
         logic.SetObjectData(data);
 
-        Debug.Log($"✅ Object geladen: {data.PrefabId} ({data.Id})");
+        Debug.Log($"✅ Object geladen: {data.prefabId} ({data.id})");
     }
     public async void DeleteAllObjects()
     {
         foreach (var obj in FindObjectsOfType<DraggingObject2D>())
         {
-            if (!string.IsNullOrEmpty(obj.objectData.Id))
+            if (!string.IsNullOrEmpty(obj.objectData.id))
             {
-                await obj.apiClient.DeleteObject2D(obj.objectData.Id);
+                await obj.apiClient.DeleteObject2D(obj.objectData.id);
             }
             Destroy(obj.gameObject);
         }

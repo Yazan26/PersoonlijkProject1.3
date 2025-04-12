@@ -10,22 +10,22 @@ using UnityEngine.Serialization;
 [Serializable]
 public class Object2D
 {
-    public string Id;
+    [FormerlySerializedAs("Id")] public string id;
 
-    public string Environment2DID;
+    [FormerlySerializedAs("Environment2DID")] public string environment2DID;
 
- public string PrefabId;
+ [FormerlySerializedAs("PrefabId")] public string prefabId;
 
-     public float PositionX;
+     [FormerlySerializedAs("PositionX")] public float positionX;
 
-     public float PositionY;
+     [FormerlySerializedAs("PositionY")] public float positionY;
 
-     public float ScaleX;
+     [FormerlySerializedAs("ScaleX")] public float scaleX;
 
-     public float ScaleY;
+     [FormerlySerializedAs("ScaleY")] public float scaleY;
 
-    public float RotationZ;
+    [FormerlySerializedAs("RotationZ")] public float rotationZ;
 
-    public int SortingLayer;
+    [FormerlySerializedAs("SortingLayer")] public int sortingLayer;
     
 }

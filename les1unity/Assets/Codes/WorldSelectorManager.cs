@@ -87,7 +87,7 @@ void logout()
 {
         PlayerPrefs.DeleteKey("SelectedWorldId");
         PlayerPrefs.Save();
-        SceneManager.LoadScene("LoginScene");
+        SceneManager.LoadScene("LoginScreen");
     }
     void ShowPanel()
     {

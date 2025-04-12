@@ -56,7 +56,7 @@ public class Object2DApiClient : MonoBehaviour
 
     public async Awaitable<IWebRequestReponse> UpdateObject2D(Object2D object2D)
     {
-        string route = "/Object2D/" + object2D.Id;
+        string route = "/Object2D/" + object2D.id;
         string data = JsonUtility.ToJson(object2D);
 
         return await webClient.SendPutRequest(route, data);
@@ -85,15 +85,18 @@ public class Object2DApiClient : MonoBehaviour
     {
         return json
             .Replace("\"Id\"", "\"id\"")
-            .Replace("\"Environment2DID\"", "\"environmentId\"")
+            .Replace("\"Environment2DID\"", "\"environment2DID\"")
             .Replace("\"PrefabId\"", "\"prefabId\"")
             .Replace("\"PositionX\"", "\"positionX\"")
             .Replace("\"PositionY\"", "\"positionY\"")
             .Replace("\"ScaleX\"", "\"scaleX\"")
             .Replace("\"ScaleY\"", "\"scaleY\"")
             .Replace("\"RotationZ\"", "\"rotationZ\"")
-            .Replace("\"SortingLayer\"", "\"sortingLayer\"");
+            .Replace("\"SortingLayer\"", "\"sortingLayer\"")
+            .Replace("\"UserID\"", "\"userID\"");
     }
+
+
 
 
 
@@ -102,12 +105,19 @@ public class Object2DApiClient : MonoBehaviour
         switch (webRequestResponse)
         {
             case WebRequestData<string> data:
-                Debug.Log("Response data raw: " + data.Data);
-                List<Object2D> environments = JsonHelper.ParseJsonArray<Object2D>(data.Data);
-                WebRequestData<List<Object2D>> parsedData = new WebRequestData<List<Object2D>>(environments);
-                return parsedData;
+                Debug.Log("📥 Response data raw:\n" + data.Data);
+
+                // Fix casing voor hele lijst
+                string fixedJson = FixJsonCasing(data.Data);
+
+                // Deserialize naar Object2D array (let op!)
+                List<Object2D> objects = JsonHelper.ParseJsonArray<Object2D>(fixedJson);
+                return new WebRequestData<List<Object2D>>(objects);
+
             default:
+                Debug.LogError("❌ Onverwacht response type ontvangen bij GET Object2Ds.");
                 return webRequestResponse;
         }
     }
+
 }

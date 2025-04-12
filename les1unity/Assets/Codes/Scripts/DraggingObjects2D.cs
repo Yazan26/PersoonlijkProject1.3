@@ -1,19 +1,17 @@
-using System;
 using UnityEngine;
 
 public class DraggingObject2D : MonoBehaviour
 {
     public Object2D objectData;
     public Object2DApiClient apiClient;
-    public string environmentId;
-    public bool isDragging = false;
     public ObjectManager objectManager;
+    public bool isDragging = false;
+
+    private bool HasValidId => !string.IsNullOrEmpty(objectData?.id);
 
     private void Start()
     {
-        // Zorg dat het object weet in welke wereld het zit
-        environmentId = PlayerPrefs.GetString("SelectedWorldId");
-        objectData.Environment2DID = environmentId;
+        objectData.environment2DID = PlayerPrefs.GetString("SelectedWorldId");
     }
 
     private void Update()
@@ -22,49 +20,33 @@ public class DraggingObject2D : MonoBehaviour
         {
             Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             transform.position = new Vector3(mousePosition.x, mousePosition.y, 0);
-            // ↺ Horizontaal roteren met Q en E
-            if (Input.GetKeyDown(KeyCode.Q))
-            {
-                transform.Rotate(0f, 0f, 15f); // linksom
-            }
-            if (Input.GetKeyDown(KeyCode.E))
-            {
-                transform.Rotate(0f, 0f, -15f); // rechtsom
-            }
-            // 🔃 Verticale flip met W en S (via scale)
-            if (Input.GetKeyDown(KeyCode.W))
-            {
-                transform.localScale = new Vector3(transform.localScale.x, Mathf.Abs(transform.localScale.y), transform.localScale.z);
-            }
-            if (Input.GetKeyDown(KeyCode.S))
-            {
-                transform.localScale = new Vector3(transform.localScale.x, -Mathf.Abs(transform.localScale.y), transform.localScale.z);
-            }
+
+            if (Input.GetKeyDown(KeyCode.Q)) transform.Rotate(0f, 0f, 15f);
+            if (Input.GetKeyDown(KeyCode.E)) transform.Rotate(0f, 0f, -15f);
+            if (Input.GetKeyDown(KeyCode.W)) transform.localScale = new Vector3(transform.localScale.x, Mathf.Abs(transform.localScale.y), transform.localScale.z);
+            if (Input.GetKeyDown(KeyCode.S)) transform.localScale = new Vector3(transform.localScale.x, -Mathf.Abs(transform.localScale.y), transform.localScale.z);
         }
 
-        if (Input.GetMouseButtonDown(1)) // rechtermuisklik om te verwijderen
+        if (Input.GetMouseButtonDown(1))
         {
-            if (IsMouseOverThisObject() && !isDragging && !string.IsNullOrEmpty(objectData.Id))
-            {
+            if (IsMouseOverThisObject() && !isDragging)
                 DeleteObject();
-            }
         }
-        
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            objectManager.DeleteAllObjects();
-        }
+
         if (Input.GetKeyDown(KeyCode.V))
         {
             if (IsMouseOverThisObject() && !isDragging)
             {
-                Debug.Log($"📦 Oppakken bestaand object met ID: {objectData.Id}");
                 isDragging = true;
+                Debug.Log($"📦 Object opgepakt (ID: {objectData.id})");
             }
         }
 
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            objectManager.DeleteAllObjects();
+        }
     }
-
 
     private void OnMouseUpAsButton()
     {
@@ -72,17 +54,17 @@ public class DraggingObject2D : MonoBehaviour
 
         objectManager.ShowMenu();
 
-        objectData.PrefabId = gameObject.name.Replace("(Clone)", "");
-        objectData.PositionX = transform.position.x;
-        objectData.PositionY = transform.position.y;
-        objectData.ScaleX = transform.localScale.x;
-        objectData.ScaleY = transform.localScale.y;
-        objectData.RotationZ = transform.rotation.eulerAngles.z;
-        objectData.SortingLayer = GetComponentInChildren<SpriteRenderer>()?.sortingOrder ?? 0;
+        objectData.prefabId = gameObject.name.Replace("(Clone)", "");
+        objectData.positionX = transform.position.x;
+        objectData.positionY = transform.position.y;
+        objectData.scaleX = transform.localScale.x;
+        objectData.scaleY = transform.localScale.y;
+        objectData.rotationZ = transform.rotation.eulerAngles.z;
+        objectData.sortingLayer = GetComponentInChildren<SpriteRenderer>()?.sortingOrder ?? 0;
 
         if (!isDragging)
         {
-            if (string.IsNullOrEmpty(objectData.Id))
+            if (!HasValidId)
                 CreateObject();
             else
                 UpdateObject();
@@ -98,7 +80,6 @@ public class DraggingObject2D : MonoBehaviour
     public void SetObjectData(Object2D data)
     {
         objectData = data;
-        environmentId = data.Environment2DID;
     }
 
     private async void CreateObject()
@@ -107,41 +88,55 @@ public class DraggingObject2D : MonoBehaviour
 
         var response = await apiClient.CreateObject2D(objectData);
 
-        if (response is WebRequestData<Object2D> obj)
+        if (response is WebRequestData<Object2D> obj && !string.IsNullOrEmpty(obj.Data.id))
         {
-            objectData.Id = obj.Data.Id;
-            Debug.Log($"✅ Object aangemaakt met id: {objectData.Id}");
-
-            UpdateObject(); // update direct met ID nu correct
-        }
-    }
-
-
-    private async void UpdateObject()
-    {
-        Debug.Log("✏️ UpdateObject aangeroepen");
-        var response = await apiClient.UpdateObject2D(objectData);
-        if (response is WebRequestData<string>)
-        {
-            Debug.Log("🔄 Object geüpdatet!");
+            objectData.id = obj.Data.id;
+            Debug.Log($"✅ Object aangemaakt met ID: {objectData.id}");
         }
         else
         {
-            Debug.LogError("❌ Kon object niet updaten.");
+            Debug.LogError("❌ Kon object niet aanmaken (geen ID ontvangen).");
         }
+    }
+
+    private async void UpdateObject()
+    {
+        Debug.Log($"✏️ UpdateObject aangeroepen met ID: {objectData.id}");
+
+        if (!HasValidId)
+        {
+            Debug.LogError("❌ Update gefaald, object heeft geen geldige ID!");
+            return;
+        }
+
+        var response = await apiClient.UpdateObject2D(objectData);
+
+        if (response is WebRequestData<string> or WebRequestData<object>)
+            Debug.Log("🔄 Object geüpdatet!");
+        else
+            Debug.LogError("❌ Kon object niet updaten.");
     }
 
     private async void DeleteObject()
     {
-        var response = await apiClient.DeleteObject2D(objectData.Id);
+        Debug.Log($"🗑️ DeleteObject aangeroepen met ID: {objectData.id}");
+
+        if (!HasValidId)
+        {
+            Debug.LogWarning("❌ Delete genegeerd, object had geen geldige ID.");
+            Destroy(gameObject); // Toch lokaal verwijderen indien niet opgeslagen.
+            return;
+        }
+
+        var response = await apiClient.DeleteObject2D(objectData.id);
         if (response is WebRequestData<string> or WebRequestData<object>)
         {
-            Debug.Log("🗑️ Object verwijderd!");
+            Debug.Log("🗑️ Object succesvol verwijderd!");
             Destroy(gameObject);
         }
         else
         {
-            Debug.LogError("❌ Verwijderen mislukt!");
+            Debug.LogError("❌ Object verwijderen mislukt.");
         }
     }
 
@@ -149,31 +144,9 @@ public class DraggingObject2D : MonoBehaviour
     {
         Vector2 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         RaycastHit2D[] hits = Physics2D.RaycastAll(mousePos, Vector2.zero);
-
-        foreach (RaycastHit2D hit in hits)
-        {
+        foreach (var hit in hits)
             if (hit.collider != null && hit.collider.gameObject == gameObject)
-            {
                 return true;
-            }
-        }
-
         return false;
     }
-
-    
-    public async void DeleteAllObjects()
-    {
-        foreach (var obj in FindObjectsOfType<DraggingObject2D>())
-        {
-            if (!string.IsNullOrEmpty(obj.objectData.Id))
-            {
-                await obj.apiClient.DeleteObject2D(obj.objectData.Id);
-            }
-            Destroy(obj.gameObject);
-        }
-
-        Debug.Log("🔥 Alle objecten verwijderd!");
-    }
-
 }
