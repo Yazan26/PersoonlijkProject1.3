@@ -15,12 +15,15 @@ public class LoginScript : MonoBehaviour
     public Button registerButton;
     public UserApiClient userApiClient;
     public WebClient webClient;
-    
+
+    private Color originalColor;
 
     void Start()
     {
-        PlayerPrefs.DeleteAll(); // Remove saved login state on startup
+        PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
+
+        originalColor = errorMessage.color;
 
         loginButton.onClick.AddListener(PerformLogin);
         registerButton.onClick.AddListener(Register);
@@ -28,76 +31,52 @@ public class LoginScript : MonoBehaviour
 
     public async void PerformLogin()
     {
-        string Email = emailInput.text;
-        string Password = passwordInput.text;
+        ResetMessageColor();
 
-        if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
+        string email = emailInput.text;
+        string password = passwordInput.text;
+
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(password))
         {
-            errorMessage.text = "❌ Vul alle velden in!";
+            ShowError("❌ Vul alle velden in!");
             return;
         }
 
-        User user = new User
+        User user = new User { email = email, password = password };
+        IWebRequestReponse response = await userApiClient.Login(user);
+
+        switch (response)
         {
-            email = Email,
-            password = Password
-        };
+            case WebRequestData<string> data:
+                Debug.Log("✅ Ingelogd! Token: " + data.Data);
 
-        IWebRequestReponse webRequestResponse = await userApiClient.Login(user);
-
-        switch (webRequestResponse)
-        {
-            case WebRequestData<string> dataResponse:
-                Debug.Log("✅ Login successful! Token received: " + dataResponse.Data);
-
-                // Save token in PlayerPrefs
-                PlayerPrefs.SetString("access_token", dataResponse.Data);
+                PlayerPrefs.SetString("access_token", data.Data);
                 PlayerPrefs.Save();
 
-                // Set token in WebClient (for use in requests)
                 if (webClient != null)
                 {
-                    webClient.SetToken(dataResponse.Data);
+                    webClient.SetToken(data.Data);
                 }
                 else
                 {
-                    Debug.LogError("❌ WebClient not found in the scene!");
+                    Debug.LogWarning("⚠️ WebClient ontbreekt.");
                 }
 
-                // Get current user ID and store it
-                // IWebRequestReponse userResponse = await userApiClient.GetCurrentUser();
-                // if (userResponse is WebRequestData<string> userIdData)
-                // {
-                //     PlayerPrefs.SetString("UserId", userIdData.Data);
-                //     PlayerPrefs.Save();
-                //     Debug.Log("✅ User ID opgeslagen: " + userIdData.Data);
-                // }
-                // else
-                // {
-                //     Debug.LogError("❌ Kan User ID niet ophalen!");
-                //     errorMessage.text = "Fout bij ophalen van gebruikersgegevens.";
-                //     return;
-                // }
-
-                // Go to the next scene
                 await SceneManager.LoadSceneAsync("WorldSelector");
                 await Task.Yield();
                 break;
 
-            case WebRequestError errorResponse:
-                if (errorResponse.ErrorMessage.Contains("401"))
-                {
-                    errorMessage.text = "Onjuist wachtwoord of Email.";
-                }
+            case WebRequestError error:
+                if (error.ErrorMessage.Contains("401") || error.ErrorMessage.Contains("400"))
+                    ShowError("Onjuist e-mailadres of wachtwoord.");
                 else
-                {
-                    errorMessage.text = "Login mislukt. Probeer opnieuw.";
-                }
-                Debug.LogError("Login failed: " + errorResponse.ErrorMessage);
+                    ShowError("Login mislukt. Probeer het later opnieuw.");
+                Debug.LogError("❌ Login error: " + error.ErrorMessage);
                 break;
 
             default:
-                throw new NotImplementedException("Unhandled response type: " + webRequestResponse.GetType());
+                ShowError("Onbekende fout bij inloggen.");
+                break;
         }
     }
 
@@ -108,50 +87,53 @@ public class LoginScript : MonoBehaviour
 
         if (string.IsNullOrEmpty(Email) || string.IsNullOrEmpty(Password))
         {
-            errorMessage.text = "Vul alle velden in!";
+            ShowError("Vul alle velden in!");
             return;
         }
 
-        // Password strength validation
-        if (Password.Length < 10 || 
-            !Password.Any(char.IsUpper) || 
-            !Password.Any(char.IsLower) || 
-            !Password.Any(char.IsDigit) || 
+        if (Password.Length < 10 ||
+            !Password.Any(char.IsUpper) ||
+            !Password.Any(char.IsLower) ||
+            !Password.Any(char.IsDigit) ||
             !Password.Any(ch => !char.IsLetterOrDigit(ch)))
         {
-            errorMessage.text = "Wachtwoord moet minimaal 10 tekens, een hoofdletter, een kleine letter, een cijfer en een speciaal teken bevatten.";
+            ShowError("Wachtwoord moet minimaal 10 tekens, een hoofdletter, kleine letter, cijfer en speciaal teken bevatten.");
             return;
         }
 
-        User user = new User
-        {
-            email = Email,
-            password = Password
-        };
-
+        User user = new User { email = Email, password = Password };
         IWebRequestReponse response = await userApiClient.Register(user);
 
-        switch (response)
+        if (response is WebRequestError error)
         {
-            case WebRequestData<string>:
-                Debug.Log("✅ Registratie succesvol!");
-                errorMessage.text = "Registratie succesvol! Je kunt nu inloggen.";
-                break;
-
-            case WebRequestError errorResponse:
-                if (errorResponse.ErrorMessage.Contains("duplicate"))
-                {
-                    errorMessage.text = "Deze Email is al in gebruik!";
-                }
-                else
-                {
-                    errorMessage.text = "Registratie mislukt: " + errorResponse.ErrorMessage;
-                }
-                Debug.LogError("Registratie mislukt: " + errorResponse.ErrorMessage);
-                break;
-
-            default:
-                throw new NotImplementedException("Unhandled response type: " + response.GetType());
+            if (error.ErrorMessage.Contains("duplicate"))
+                ShowError("Deze e-mail is al in gebruik.");
+            else
+                ShowError("Email is al in gebruik! log in!");
+            Debug.LogError("❌ Registratie error: " + error.ErrorMessage);
         }
+        else
+        {
+            Debug.Log("✅ Registratie gelukt!");
+            ShowSuccess("Registratie succesvol! Je kunt nu inloggen.");
+        }
+    }
+
+
+    private void ShowError(string message)
+    {
+        errorMessage.text = message;
+        errorMessage.color = Color.red;
+    }
+
+    private void ShowSuccess(string message)
+    {
+        errorMessage.text = message;
+        errorMessage.color = Color.green;
+    }
+
+    private void ResetMessageColor()
+    {
+        errorMessage.color = originalColor;
     }
 }

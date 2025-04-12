@@ -15,7 +15,7 @@ public GameObject TipPanel;
     public void Start()
     {
         TipButton.onClick.AddListener(OnTipButtonClick);
-        Backbutton.onClick.AddListener(back);
+        Backbutton?.onClick.AddListener(back);
     }
 
     public void back()

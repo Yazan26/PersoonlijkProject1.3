@@ -1033,7 +1033,6 @@ MonoBehaviour:
   - {fileID: 2319415190314549223, guid: 6e541c505e160c544bb9aeb8823cbe98, type: 3}
   - {fileID: 2319415190314549223, guid: d0f08a726a97d484fb29493a45268c58, type: 3}
   objectApiClient: {fileID: 1038488739}
-  Backbutton: {fileID: 940449634}
 --- !u!1 &870484418 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 8763844781327212644, guid: 46620c21f54c1844a8128d6f44b4c14d, type: 3}
@@ -2264,6 +2263,10 @@ PrefabInstance:
       propertyPath: TipButton
       value: 
       objectReference: {fileID: 321175004}
+    - target: {fileID: 3847131900060984623, guid: e4dd79cd27b8b2a44ab602acde62a90a, type: 3}
+      propertyPath: Backbutton
+      value: 
+      objectReference: {fileID: 940449634}
     - target: {fileID: 3974770429027828783, guid: e4dd79cd27b8b2a44ab602acde62a90a, type: 3}
       propertyPath: m_LocalPosition.x
       value: 345.2047
